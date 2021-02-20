@@ -17,6 +17,14 @@ intents.members = True
 
 bot = commands.Bot(command_prefix='!', intents=intents)
 
+def mentionToId(mention):
+    userId = mention
+    if userId.startswith('<@') and userId.endswith('>'):
+        userId = userId[2:-1]
+    if userId.startswith('!'):
+        userId = userId[1:]
+    return int(userId)
+
 @bot.event
 async def on_ready():
     print(f'{bot.user.name} has connected to Discord!')
@@ -25,9 +33,8 @@ async def on_ready():
 @bot.command(name='create_account', help='Create a new mutual credit account')
 @commands.has_role('member')
 async def create_account(ctx):
-    accountInfo = creditSystem.createAccount(ctx.author.name)
+    creditSystem.createAccount(ctx.author.id)
     await ctx.send('Mutual credit account created!')
-    await ctx.send(f'{accountInfo}')
 
 
 @bot.command(name='show_balance', help='Show account balance')
@@ -35,7 +42,7 @@ async def create_account(ctx):
 async def show_balance(ctx):
     balance = None
     try:
-        balance = creditSystem.getAccountBalance(ctx.author.name)
+        balance = creditSystem.getBalance(ctx.author.id)
     except InvalidAccountIdError as e:
         await ctx.send(str(e))
     else:
@@ -46,84 +53,62 @@ async def show_balance(ctx):
 @bot.command(name='create_offer', help='Create a new offer to your account\nArgs: DESC PRICE TITLE')
 @commands.has_role('member')
 async def create_offer(ctx, description, price: int, title):
-    offerData = None
+    offerId = None
     try:
-        offerData = creditSystem.createAccountOffer(ctx.author.name, description, price, title)
+        offerId = creditSystem.createOffer(ctx.author.id, description, price, title)
     except InvalidAccountIdError as e:
         await ctx.send(str(e))
     except Exception as e:
         raise
     else:
-        await ctx.send(f'Offer ID: {offerData}')
+        await ctx.send(f'Offer ID: {offerId}')
 
 
-@bot.command(name='get_account_offers', help='Get offers for a seller\'s account\nArgs: SELLER_NAME')
-@commands.has_role('member')
-async def get_account_offers(ctx, sellerName):
-    offersData = None
-    try:
-        offersData = creditSystem.getAccountOffersData(sellerName)
-    except InvalidAccountIdError as e:
-        await ctx.send(str(e))
-    except InvalidOfferIdError as e:
-        await ctx.send(str(e))
-    else:
-        await ctx.send(f'{sellerName}\'s offers:')
-        await ctx.send(f'{offersData}')
-
-
-@bot.command(name='get_offer_info', help='Get info about a seller\'s offer by ID\nArgs: SELLER_NAME OFFER_ID')
-@commands.has_role('member')
-async def get_offer_info(ctx, sellerName, offerId):
-    offerData = None
-    try:
-        offerData = creditSystem.getAccountOfferData(sellerName, offerId)
-    except InvalidAccountIdError as e:
-        await ctx.send(str(e))
-    except InvalidOfferIdError as e:
-        await ctx.send(str(e))
-    else:
-        await ctx.send(f'{offerData}')
-
-
-
-@bot.command(name='remove_offer', help='Remove an existing offer from your account\nArgs: OFFER_ID')
+@bot.command(name='delete_offer', help='Remove an existing offer from your account\nArgs: OFFER_ID')
 @commands.has_role('member')
 async def remove_offer(ctx, offerId):
     try:
-        creditSystem.removeAccountOffer(ctx.author.name, offerId)
-    except InvalidOfferIdError as e:
+        creditSystem.deleteOffer(ctx.author.id, offerId)
+    except Exception as e:
         await ctx.send(str(e))
     else:
         await ctx.send('Offer has been removed!')
 
 
-@bot.command(name='request_buy', help='Request a transaction to buy an offer from a seller\nArgs: SELLER_NAME OFFER_ID')
+# Output needs better formatting
+@bot.command(name='get_offers', help='Get offers for a seller\'s account\nArgs: SELLER_NAME')
 @commands.has_role('member')
-async def request_buy(ctx, sellerName, offerId):
-    txData = None
+async def get_offers(ctx, seller):
+    sellerId = mentionToId(seller)
+    offers = None
     try:
-        txData = creditSystem.requestTransaction(ctx.author.name, sellerName, offerId)
-    except BuyerIsSellerError as e:
+        offers = creditSystem.getOffers(sellerId)
+    except InvalidAccountIdError as e:
         await ctx.send(str(e))
     except InvalidOfferIdError as e:
         await ctx.send(str(e))
-    except AccountBalanceBelowMinError as e:
-        await ctx.send(str(e))
-    except Exception as e:
-        raise
     else:
-        await ctx.send(f'Transaction created: {txData}')
-        # send message to seller to notify them
-        guild = ctx.guild
-        seller = discord.utils.get(guild.members, name=sellerName)
-        offerData = creditSystem.getAccountOfferData(sellerName, offerId)
-        #del txData['offerId'] # not necessary, adding offerData instead
-        txData['offer'] = offerData
+        await ctx.send(f'{offers}')
+
+
+@bot.command(name='request_buy', help='Request a transaction to buy an offer from a seller\nArgs: SELLER_NAME OFFER_ID')
+@commands.has_role('member')
+async def request_buy(ctx, sellerMention, offerId):
+    sellerId = mentionToId(sellerMention)
+    txId = None
+    try:
+        txId = creditSystem.createTransaction(ctx.author.id, sellerId, offerId)
+    except Exception as e:
+        await ctx.send(str(e))
+    else:
+        await ctx.send(f'Transaction created with ID "{txId}"')
+        #seller = discord.utils.get(guild.members, name=sellerName)
+        seller = ctx.guild.get_member(sellerId)
+        tx = creditSystem.getTransaction(txId)
         await seller.create_dm()
         await seller.dm_channel.send(
             f'New buy request:\n'
-            f'{txData}'
+            f'{tx}'
         )
 
 
@@ -141,7 +126,7 @@ async def approve_tx(ctx, txId):
         await ctx.send(str(e))
     else:
         await ctx.send(f'Transaction approved!')
-        balance = creditSystem.getAccountBalance(ctx.author.name)
+        balance = creditSystem.getAccountBalance(ctx.author.id)
         await ctx.send(f'New account balance: ${balance}')
 
 
@@ -150,10 +135,10 @@ async def approve_tx(ctx, txId):
 async def cancel_tx(ctx, txId):
     try:
         creditSystem.cancelTransaction(txId)
-    except InvalidTransactionIdError as e:
+    except Exception as e:
         await ctx.send(str(e))
     else:
-        await ctx.send(f'Transaction "{txId}" cancelled.')
+        await ctx.send(f'Transaction cancelled!')
 
 
 @bot.command(name='deny_tx', help='Deny a pending buy request from a buyer\nArgs: TX_ID')
@@ -161,10 +146,10 @@ async def cancel_tx(ctx, txId):
 async def deny_tx(ctx, txId):
     try:
         creditSystem.denyTransaction(txId)
-    except InvalidTransactionIdError as e:
+    except Exception as e:
         await ctx.send(str(e))
     else:
-        await ctx.send(f'Transaction "{txId}" denied.')
+        await ctx.send(f'Transaction denied!')
 
 
 bot.run(TOKEN)

@@ -1,3 +1,11 @@
+# Database file
+credit_system.db
+
+# sqlite3 helper scripts
+sqldiff.exe
+sqlite3.exe
+sqlite3_analyzer.exe
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
