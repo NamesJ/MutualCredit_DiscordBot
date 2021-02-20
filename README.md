@@ -1,2 +1,2 @@
 # MutualCredit_DiscordBot
-A Discord Bot that adds a mutual credit system
+A Discord Bot that adds a mutual credit system to your server
