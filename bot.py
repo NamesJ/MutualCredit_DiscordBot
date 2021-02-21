@@ -1,13 +1,12 @@
 # bot.py
-import mutual_credit
-from mutual_credit.credit_system import CreditSystem
+from credit_system import CreditSystem
 
 import os
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 
-creditSystem = CreditSystem()
+cs = CreditSystem()
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -30,17 +29,23 @@ async def on_ready():
     print(f'{bot.user.name} has connected to Discord!')
 
 
-@bot.command(name='kill_bot', help='Kill bot process')
+@bot.command(name='kill', help='Kill bot process')
 @commands.has_role('admin')
 async def kill_bot(ctx):
     exit()
+
+
+@bot.command(name='clean_db', help='Reset database')
+@commands.has_role('admin')
+async def clean_db(ctx):
+    cs.cleanDB()
 
 
 @bot.command(name='mk_account', help='Create a new mutual credit account | !mk_account')
 @commands.has_role('member')
 async def mk_account(ctx):
     try:
-        creditSystem.createAccount(ctx.author.id)
+        cs.createAccount(ctx.author.id)
     except Exception as e:
         await ctx.send(str(e))
         print(e)
@@ -53,10 +58,11 @@ async def mk_account(ctx):
 async def balance(ctx):
     balance = None
     try:
-        balance = creditSystem.getBalance(ctx.author.id)
+        balance = cs.getBalance(ctx.author.id)
     except Exception as e:
         await ctx.send(str(e))
         print(e)
+        raise
     else:
         await ctx.send(f'Account balance: ${balance}')
 
@@ -67,7 +73,7 @@ async def balance(ctx):
 async def mk_offer(ctx, description, price: int, title):
     offerId = None
     try:
-        offerId = creditSystem.createOffer(ctx.author.id, description, price, title)
+        offerId = cs.createOffer(ctx.author.id, description, price, title)
     except Exception as e:
         await ctx.send(str(e))
         print(e)
@@ -77,12 +83,12 @@ async def mk_offer(ctx, description, price: int, title):
 
 @bot.command(name='add_cats', help='Add categories to an existing offer | !add_cats OFFER_ID CAT1 CAT2 CAT3...')
 @commands.has_role('member')
-async def add_cats(ctx, offerId, *args):
+async def add_cats(ctx, offer_id, *args):
     cnt = 0
 
     for category in args:
         try:
-            creditSystem.addOfferCategory(offerId, category)
+            cs.addCategoryToOffer(offer_id, category)
         except Exception as e:
             await ctx.send(str(e))
             print(e)
@@ -94,24 +100,26 @@ async def add_cats(ctx, offerId, *args):
 
 @bot.command(name='ls_cats', help='List categories associated with an existing offer | !ls_cats OFFER_ID')
 @commands.has_role('member')
-async def ls_cats(ctx, offerId):
+async def ls_cats(ctx, offer_id):
     try:
-        categories = creditSystem.getOfferCategories(offerId)
+        categories = cs.getOfferCategories(offer_id)
     except Exception as e:
         await ctx.send(str(e))
         print(e)
     else:
-        await ctx.send(f'Offer {offerId}: Categories: {categories}')
+        if len(categories) > 0:
+            categories = ', '.join(categories)
+        await ctx.send(f'Offer {offer_id} categories: {categories}')
 
 
 @bot.command(name='rm_cats', help='Remove categories from an existing offer | !rm_cats OFFER_ID CAT1 CAT2 CAT3...')
 @commands.has_role('member')
-async def rm_cats(ctx, offerId, *args):
+async def rm_cats(ctx, offer_id, *args):
     cnt = 0
 
     for category in args:
         try:
-            creditSystem.deleteOfferCategory(offerId, category)
+            cs.removeCategoryFromOffer(offer_id, category)
         except Exception as e:
             await ctx.send(str(e))
             print(e)
@@ -123,9 +131,12 @@ async def rm_cats(ctx, offerId, *args):
 
 @bot.command(name='rm_offer', help='Remove an offer from your account | !rm_offer OFFER_ID')
 @commands.has_role('member')
-async def rm_offer(ctx, offerId):
+async def rm_offer(ctx, offer_id):
     try:
-        creditSystem.deleteOffer(ctx.author.id, offerId)
+        seller_id = cs.getOfferSeller(offer_id)
+        if ctx.author.id != seller_id:
+            raise Exception('User attempted to delete offer from another user\'s account')
+        cs.deleteOffer(offer_id)
     except Exception as e:
         await ctx.send(str(e))
         print(e)
@@ -137,10 +148,10 @@ async def rm_offer(ctx, offerId):
 @bot.command(name='ls_offers', help='Get offers for a seller\'s account | !ls_offers SELLER')
 @commands.has_role('member')
 async def ls_offers(ctx, seller):
-    sellerId = mentionToId(seller)
+    seller_id = mentionToId(seller)
     offers = None
     try:
-        offers = creditSystem.getOffers(sellerId)
+        offers = cs.getOffers(seller_id)
     except Exception as e:
         await ctx.send(str(e))
         print(e)
@@ -150,19 +161,19 @@ async def ls_offers(ctx, seller):
 
 @bot.command(name='buy', help='Send a request to buy an offer from a seller | !buy OFFER_ID')
 @commands.has_role('member')
-async def mk_buy(ctx, offerId):
-    txId = None
+async def mk_buy(ctx, offer_id):
+    tx_id = None
     try:
-        txId = creditSystem.createTransaction(ctx.author.id, offerId)
+        tx_id = cs.createTransaction(ctx.author.id, offer_id)
     except Exception as e:
         await ctx.send(str(e))
         print(e)
     else:
-        await ctx.send(f'Transaction ID: {txId}')
+        await ctx.send(f'Transaction ID: {tx_id}')
         #seller = discord.utils.get(guild.members, name=sellerName)
-        sellerId = creditSystem.getSellerIdByOfferId(offerId)
-        seller = ctx.guild.get_member(sellerId)
-        tx = creditSystem.getTransaction(txId)
+        seller_id = cs.getOfferSeller(offer_id)
+        seller = ctx.guild.get_member(seller_id)
+        tx = cs.getTransaction(tx_id)
         await seller.create_dm()
         await seller.dm_channel.send(
             f'New buy request:\n'
@@ -172,41 +183,40 @@ async def mk_buy(ctx, offerId):
 
 @bot.command(name='approve', help='Approve a buy request from another user | !approve TX_ID')
 @commands.has_role('member')
-async def approve_tx(ctx, txId):
+async def approve_tx(ctx, tx_id):
     balance = None
     try:
-        creditSystem.approveTransaction(txId)
+        cs.approveTransaction(tx_id)
     except Exception as e:
         await ctx.send(str(e))
         print(e)
+        raise
     else:
         await ctx.send(f'Transaction approved!')
-        balance = creditSystem.getAccountBalance(ctx.author.id)
+        balance = cs.getBalance(ctx.author.id)
         await ctx.send(f'New account balance: ${balance}')
 
 
 @bot.command(name='cancel', help='Cancel your pending buy request | !cancel TX_ID')
 @commands.has_role('member')
-async def cancel_tx(ctx, txId):
+async def cancel_tx(ctx, tx_id):
     try:
-        creditSystem.cancelTransaction(txId)
+        cs.cancelTransaction(tx_id)
     except Exception as e:
         await ctx.send(str(e))
         print(e)
-        raise
     else:
         await ctx.send(f'Transaction cancelled!')
 
 
 @bot.command(name='deny', help='Deny a request to buy | !deny TX_ID')
 @commands.has_role('member')
-async def deny_tx(ctx, txId):
+async def deny_tx(ctx, tx_id):
     try:
-        creditSystem.denyTransaction(txId)
+        cs.denyTransaction(tx_id)
     except Exception as e:
         await ctx.send(str(e))
         print(e)
-        raise
     else:
         await ctx.send(f'Transaction denied!')
 
