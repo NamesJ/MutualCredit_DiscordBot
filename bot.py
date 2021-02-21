@@ -1,8 +1,8 @@
 # bot.py
+import mutual_credit
+from mutual_credit.credit_system import CreditSystem
+
 import os
-
-from credit_system import *
-
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
