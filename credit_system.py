@@ -259,95 +259,119 @@ class CreditSystemDB(object):
         cur.execute(sql)
         self.conn.commit()
 
-    def create_transaction(self, tx):
-        sql = ''' INSERT INTO transactions(id, buyer_id, seller_id, offer_id,
-                                        status, start_timestamp, end_timestamp)
-                    VALUES(?,?,?,?,?,?,?)'''
+    # create transaction
+    def create_transaction(self, tx_id, buyer_id, seller_id, offer_id, status,
+                                                start_timestamp, end_timestamp):
+        if end_timestamp is None: end_timestamp = "Null"
+        sql = f'''  INSERT INTO transactions(id,
+                                             buyer_id,
+                                             seller_id,
+                                             offer_id,
+                                             status,
+                                             start_timestamp,
+                                             end_timestamp)
+                    VALUES("{tx_id}",
+                           "{buyer_id}",
+                           "{seller_id}",
+                           "{offer_id}",
+                           "{status}",
+                           {start_timestamp},
+                           {end_timestamp})'''
+        print(f'create_transaction(): sql="{sql}"')
         cur = self.conn.cursor()
-        cur.execute(sql, tx)
+        cur.execute(sql)
         self.conn.commit()
         return cur.lastrowid
 
     def get_account_balance(self, accountId):
-        sql = f''' SELECT balance
+        sql = f'''  SELECT balance
                     FROM accounts
-                    WHERE id={accountId}; '''
+                    WHERE id="{accountId}"; '''
         cur = self.conn.cursor()
         cur.execute(sql)
         rows = cur.fetchall() # should only be one
         return rows[0][0]
 
     def update_account_balance(self, accountId, newBalance):
-        sql = f''' UPDATE accounts
+        sql = f'''  UPDATE accounts
                     SET balance={newBalance}
-                    WHERE id={accountId}; '''
+                    WHERE id="{accountId}"; '''
         cur = self.conn.cursor()
         cur.execute(sql)
         self.conn.commit()
 
     def approve_transaction(self, txId):
-        sql = f''' UPDATE transactions
-                    SET status={"APPROVED"}
-                        end_timestamp={int(time.time())}
-                    WHERE id={txId}; '''
+        sql = f'''  UPDATE transactions
+                    SET status="APPROVED", end_timestamp={int(time.time())}
+                    WHERE id="{txId}"; '''
+        print(f'approve_transaction(): sql="{sql}"')
         cur = self.conn.cursor()
         cur.execute(sql)
         self.conn.commit()
 
     def cancel_transaction(self, txId):
-        sql = f''' UPDATE transactions
-                    SET status={"CANCELLED"}
-                    WHERE id={txId}; '''
+        sql = f'''  UPDATE transactions
+                    SET status="CANCELLED"
+                    WHERE id="{txId}"; '''
         cur = self.conn.cursor()
         cur.execute(sql)
         self.conn.commit()
 
-    def deny_transaction(self, txid):
-        sql = f''' UPDATE transactions
-                    SET status={"DENIED"}
-                    WHERE id={txId}; '''
+    def deny_transaction(self, txId):
+        sql = f'''  UPDATE transactions
+                    SET status="DENIED"
+                    WHERE id="{txId}"; '''
         cur = self.conn.cursor()
         cur.execute(sql)
         self.conn.commit()
 
     def get_account_min_balance(self, accountId):
-        sql = f''' SELECT min_balance
+        sql = f'''  SELECT min_balance
                     FROM accounts
-                    WHERE id={accountId}; '''
+                    WHERE id="{accountId}"; '''
         cur = self.conn.cursor()
         cur.execute(sql)
         rows = cur.fetchall() # should only be one
         return rows[0][0]
 
     def get_account_max_balance(self, accountId):
-        sql = f''' SELECT max_balance
+        sql = f'''  SELECT max_balance
                     FROM accounts
-                    WHERE id={accountId}; '''
+                    WHERE id="{accountId}"; '''
         cur = self.conn.cursor()
         cur.execute(sql)
         rows = cur.fetchall() # should only be one
         return rows[0][0]
 
     def get_account_offers(self, accountId):
-        sql = f''' SELECT *
+        sql = f'''  SELECT *
                     FROM offers
-                    WHERE account_id={accountId}; '''
+                    WHERE account_id="{accountId}"; '''
         cur = self.conn.cursor()
         cur.execute(sql)
         rows = cur.fetchall()
         return rows
 
     def get_offer_price(self, offerId):
-        sql = f''' SELECT price
+        sql = f'''  SELECT price
                     FROM offers
-                    WHERE id={offerId}; '''
+                    WHERE id="{offerId}"; '''
+        cur = self.conn.cursor()
+        cur.execute(sql)
+        rows = cur.fetchall()
+        return rows[0][0]
+
+    def get_seller_by_offer(self, offerId):
+        sql = f'''  SELECT account_id
+                    FROM offers
+                    WHERE id="{offerId}"; '''
         cur = self.conn.cursor()
         cur.execute(sql)
         rows = cur.fetchall()
         return rows[0][0]
 
     def get_transaction(self, txId):
-        sql = f''' SELECT *
+        sql = f'''  SELECT *
                     FROM transactions
                     WHERE id="{txId}"; '''
         cur = self.conn.cursor()
@@ -356,9 +380,10 @@ class CreditSystemDB(object):
         return rows[0]
 
     def get_pending_transactions_by_buyer(self, accountId):
-        sql = f''' SELECT *
+        sql = f'''  SELECT *
                     FROM transactions
-                    WHERE buyer_id={accountId} AND status=PENDING; '''
+                    WHERE buyer_id="{accountId}"
+                          AND status=PENDING; '''
         cur = self.conn.cursor()
         cur.execute(sql)
         rows = cur.fetchall()
@@ -396,10 +421,13 @@ class CreditSystem (object):
         return offer[0]
 
     # Should use a "pending balance" rather than actual balance of buyer
-    def createTransaction(self, buyerId, sellerId, offerId):
+    def createTransaction(self, buyerId, offerId):
         buyerBalance = self.db.get_account_balance(buyerId)
         buyerMinBalance = self.db.get_account_min_balance(buyerId)
         offerPrice = self.db.get_offer_price(offerId)
+
+        sellerId = self.db.get_seller_by_offer(offerId)
+        # TODO: check that offer exists
 
         if buyerId == sellerId:
             raise Exception('Buyer ID must be different from seller ID')
@@ -407,9 +435,11 @@ class CreditSystem (object):
         if buyerBalance - offerPrice < buyerMinBalance:
             raise Exception('Buyer balance too low for transaction')
 
-        tx = (str(uuid.uuid4()), buyerId, sellerId, offerId, "PENDING",
+        txId = str(uuid.uuid4())
+        tx = (txId, buyerId, sellerId, offerId, "PENDING",
                 int(time.time()), None)
-        self.db.create_transaction(tx)
+        self.db.create_transaction(txId, buyerId, sellerId, offerId, "PENDING",
+                                                        int(time.time()), None)
         return tx[0]
 
     # delete could be dangerous, instead maybe have an 'enabled' flag
@@ -462,6 +492,9 @@ class CreditSystem (object):
 
     def getOffers(self, accountId):
         return self.db.get_account_offers(accountId)
+
+    def getSellerIdByOfferId(self, offerId):
+        return self.db.get_seller_by_offer(offerId)
 
     def getTransaction(self, txId):
         return self.db.get_transaction(txId)
