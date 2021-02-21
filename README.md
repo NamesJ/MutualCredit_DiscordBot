@@ -4,21 +4,29 @@ A Discord Bot that adds a mutual credit system to your server.
 *Note: This project is in very early alpha. It is not yet ready for actual use.*
 
 ## Todo
-* Persistence / database
-  ** Currently, there is no persistence whatsoever. If the program crashes or gets reset, all of the data is gone.
+* README
+  ** Better info to help devs to get started contributing
+* Diagrams
+  ** User workflow diagrams to make high-level understanding of how things work easier to understand.
+* Data integrity
+  ** There is currently little to no data integrity checks for what data is inserted into the database.
+* Refactoring / modularity
+  ** The `credit_system.py` script desperately needs to be broken up into smaller modules. Possible moved away from an object oriented design entirely.
 * Cleaner bot interface
-  ** The current interface performs a lot of actions by referencing an unwieldly unique ID for referring to a specific offer or transaction. It would be much better if this were abstracted away.
+  ** The current interface requires the user to perform a lot of actions by copying unique IDs for things. It would more user-friendly if this were abstracted away.
   ** The results returned from commands are also not all that user friendly as they're usually just python dictionaries.
-* Democratic control mechanisms
-  ** A voting mechanism for deciding if a certain users is allowed to have a credit account would be cool. Currently, the bot just restricts credit commands to users with the 'member' role. This can be managed by whatever leadership already exists for the server; so maybe it isn't necessary for now.
 * Private bot messaging
   ** At the moment, users can only send commands to the bot from public channels. Some results are sent via direct message to the calling user, but sending commands is not yet possible. Being able to keep all of your mutual credit commands and results from the bot in a single private channel with just yourself and the bot would keep public channels from being overwhelmed and allow for a legible and tidy personal bot history.
-* User referencing
-  ** Right now account IDs are just the users usernames. This is certainly not the best way to do it. A better solution would be user IDs instead of names. This could then be expanded to also allow users to use *mentions* instead of typing out usernames.
-* Search features
+* Search features for finding offers
   ** Search functionality for finding offers based on one or more search terms (categories, keywords, etc.). Currently the only way to find offers is by manually requesting a list of offers for a specific account.
 * Tests
   ** There are currently no tests. This is... bad.
+* Error handling
+  ** Saying that errors aren't handled gracefully is laughably understated. Right now they're just printed to the console and the channel in the original context of the command.
+* Logging
+  ** There are currently no robust logging features. This would be really helpful in debugging and error-recovery.
+* Democratic control mechanisms
+  ** A voting mechanism for deciding if a certain users is allowed to have a credit account would be cool. Currently, the bot just restricts credit commands to users with the 'member' role. This can be managed by whatever leadership already exists for the server; so maybe it isn't necessary for now.
 
 ## What *is* working
 * Managing accounts (create, delete)
