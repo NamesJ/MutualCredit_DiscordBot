@@ -31,8 +31,11 @@ A Discord Bot that adds a mutual credit system to your server.
 ## What *is* working
 * Managing accounts (create, delete)
 * Managing your accounts offers (create, delete, list)
+* Listing offers from other accounts
 * Creating transactions (buy requests) for another users offers
-* Approving transactions (approving a buy request) from another user to you
+* Cancelling buy requests you created that are still pending
+* Approving transactions (approving a buy request) sent to you
+* Denying transactions (denying a buy request) sent to you
 * Account balances are properly updated (so far -- no edge cases tested yet)
 
 
