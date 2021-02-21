@@ -64,6 +64,7 @@ class CreditSystemDB(object):
         self.conn = self._create_connection(dbFile)
         self._init_accounts_table()
         self._init_offers_table()
+        self._init_offer_categories_table()
         self._init_transactions_table()
 
     def _create_connection(self, dbFile):
@@ -86,37 +87,44 @@ class CreditSystemDB(object):
             raise Exception('Failed to create database connection.')
 
     def _init_offers_table(self):
-        self._create_table(""" CREATE TABLE IF NOT EXISTS offers (
-                                id text,
-                                account_id integer,
-                                description text NOT NULL,
-                                price integer NOT NULL,
-                                title text NOT NULL,
-                                PRIMARY KEY (id, account_id),
-                                FOREIGN KEY(account_id) REFERENCES members(id)
-                            ); """)
+        self._create_table('''  CREATE TABLE IF NOT EXISTS offers (
+                                    id text,
+                                    account_id integer,
+                                    description text NOT NULL,
+                                    price integer NOT NULL,
+                                    title text NOT NULL,
+                                    PRIMARY KEY (id, account_id),
+                                    FOREIGN KEY(account_id) REFERENCES members(id)
+                                ); ''')
+
+    def _init_offer_categories_table(self):
+        self._create_table('''  CREATE TABLE IF NOT EXISTS offer_categories(
+                                    offer_id text,
+                                    category text,
+                                    PRIMARY KEY (offer_id, category)
+                                ); ''')
 
     def _init_accounts_table(self):
-        self._create_table(""" CREATE TABLE IF NOT EXISTS accounts (
-                                id text PRIMARY KEY,
-                                balance integer NOT NULL,
-                                max_balance integer NOT NULL,
-                                min_balance integer NOT NULL
-                            ); """)
+        self._create_table('''  CREATE TABLE IF NOT EXISTS accounts (
+                                    id text PRIMARY KEY,
+                                    balance integer NOT NULL,
+                                    max_balance integer NOT NULL,
+                                    min_balance integer NOT NULL
+                            ); ''')
 
     def _init_transactions_table(self):
-        self._create_table(""" CREATE TABLE IF NOT EXISTS transactions (
-                                id text PRIMARY KEY,
-                                buyer_id text NOT NULL,
-                                seller_id text NOT NULL,
-                                offer_id text NOT NULL,
-                                status text NOT NULL,
-                                start_timestamp int NOT NULL,
-                                end_timestamp int,
-                                FOREIGN KEY(buyer_id) REFERENCES members(id),
-                                FOREIGN KEY(seller_id) REFERENCES members(id),
-                                FOREIGN KEY(offer_id) REFERENCES offers(id)
-                            );""")
+        self._create_table('''  CREATE TABLE IF NOT EXISTS transactions (
+                                    id text PRIMARY KEY,
+                                    buyer_id text NOT NULL,
+                                    seller_id text NOT NULL,
+                                    offer_id text NOT NULL,
+                                    status text NOT NULL,
+                                    start_timestamp int NOT NULL,
+                                    end_timestamp int,
+                                    FOREIGN KEY(buyer_id) REFERENCES members(id),
+                                    FOREIGN KEY(seller_id) REFERENCES members(id),
+                                    FOREIGN KEY(offer_id) REFERENCES offers(id)
+                                );''')
 
     def create_account(self, account):
         sql = ''' INSERT INTO accounts(id, balance, max_balance, min_balance)
@@ -127,24 +135,39 @@ class CreditSystemDB(object):
         return cur.lastrowid
 
     def delete_account(self, accountId):
-        sql = f''' DELETE FROM accounts
-                    WHERE id={accountId}'''
+        sql = f'''  DELETE FROM accounts
+                    WHERE id="{accountId}";'''
         cur = conn.cursor()
         cur.execute(sql)
         self.conn.commit()
 
     def create_offer(self, offer):
-        sql = ''' INSERT INTO offers(id, account_id, description, price, title)
-                    VALUES(?,?,?,?,?)'''
+        sql = '''   INSERT INTO offers(id, account_id, description, price, title)
+                    VALUES(?,?,?,?,?);'''
         cur = self.conn.cursor()
         cur.execute(sql, offer)
         self.conn.commit()
         return cur.lastrowid
 
+    def create_offer_category(self, offerId, category):
+        sql = f'''   INSERT INTO offer_categories(offer_id, category)
+                        VALUES("{offerId}", "{category}");'''
+        cur = self.conn.cursor()
+        cur.execute(sql)
+        self.conn.commit()
+        return cur.lastrowid
+
+    def delete_offer_category(self, offerId, category):
+        sql = f'''  DELETE FROM offer_categories
+                    WHERE offer_id="{offerId}" AND category="{category}" ;'''
+        cur = self.conn.cursor()
+        cur.execute(sql)
+        self.conn.commit()
+
     def delete_offer(self, offerId):
-        sql = f''' DELETE FROM offers
-                    WHERE id={offerId}'''
-        cur = conn.cursor()
+        sql = f'''  DELETE FROM offers
+                    WHERE id="{offerId}";'''
+        cur = self.conn.cursor()
         cur.execute(sql)
         self.conn.commit()
 
@@ -166,7 +189,7 @@ class CreditSystemDB(object):
                            "{status}",
                            {start_timestamp},
                            {end_timestamp})'''
-        print(f'create_transaction(): sql="{sql}"')
+        #print(f'create_transaction(): sql="{sql}"')
         cur = self.conn.cursor()
         cur.execute(sql)
         self.conn.commit()
@@ -181,6 +204,15 @@ class CreditSystemDB(object):
         rows = cur.fetchall() # should only be one
         return rows[0][0]
 
+    def get_offer_categories(self, offerId):
+        sql = f'''  SELECT category
+                    FROM offer_categories
+                    WHERE offer_id="{offerId}";'''
+        cur = self.conn.cursor()
+        cur.execute(sql)
+        rows = cur.fetchall()
+        return rows
+
     def update_account_balance(self, accountId, newBalance):
         sql = f'''  UPDATE accounts
                     SET balance={newBalance}
@@ -193,7 +225,7 @@ class CreditSystemDB(object):
         sql = f'''  UPDATE transactions
                     SET status="APPROVED", end_timestamp={int(time.time())}
                     WHERE id="{txId}"; '''
-        print(f'approve_transaction(): sql="{sql}"')
+        #print(f'approve_transaction(): sql="{sql}"')
         cur = self.conn.cursor()
         cur.execute(sql)
         self.conn.commit()
@@ -303,6 +335,16 @@ class CreditSystem (object):
         if minBalance is None: minBalance = self.minBalance
         account = (accountId, 0, maxBalance, minBalance)
         self.db.create_account(account)
+
+    def addOfferCategory(self, offerId, category):
+        self.db.create_offer_category(offerId, category)
+
+    def getOfferCategories(self, offerId):
+        result = self.db.get_offer_categories(offerId)
+        return list([row[0] for row in result])
+
+    def deleteOfferCategory(self, offerId, category):
+        self.db.delete_offer_category(offerId, category)
 
     def createOffer(self, accountId, description, price, title):
         offer = (str(uuid.uuid4()), accountId, description, price, title)

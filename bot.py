@@ -30,6 +30,12 @@ async def on_ready():
     print(f'{bot.user.name} has connected to Discord!')
 
 
+@bot.command(name='kill_bot', help='Kill bot process')
+@commands.has_role('admin')
+async def kill_bot(ctx):
+    exit()
+
+
 @bot.command(name='mk_account', help='Create a new mutual credit account | !mk_account')
 @commands.has_role('member')
 async def mk_account(ctx):
@@ -67,6 +73,52 @@ async def mk_offer(ctx, description, price: int, title):
         print(e)
     else:
         await ctx.send(f'Offer ID: {offerId}')
+
+
+@bot.command(name='add_cats', help='Add categories to an existing offer | !add_cats OFFER_ID CAT1 CAT2 CAT3...')
+@commands.has_role('member')
+async def add_cats(ctx, offerId, *args):
+    cnt = 0
+
+    for category in args:
+        try:
+            creditSystem.addOfferCategory(offerId, category)
+        except Exception as e:
+            await ctx.send(str(e))
+            print(e)
+        else:
+            cnt += 1
+
+    await ctx.send(f'{cnt}/{len(args)} categories added to offer')
+
+
+@bot.command(name='ls_cats', help='List categories associated with an existing offer | !ls_cats OFFER_ID')
+@commands.has_role('member')
+async def ls_cats(ctx, offerId):
+    try:
+        categories = creditSystem.getOfferCategories(offerId)
+    except Exception as e:
+        await ctx.send(str(e))
+        print(e)
+    else:
+        await ctx.send(f'Offer {offerId}: Categories: {categories}')
+
+
+@bot.command(name='rm_cats', help='Remove categories from an existing offer | !rm_cats OFFER_ID CAT1 CAT2 CAT3...')
+@commands.has_role('member')
+async def rm_cats(ctx, offerId, *args):
+    cnt = 0
+
+    for category in args:
+        try:
+            creditSystem.deleteOfferCategory(offerId, category)
+        except Exception as e:
+            await ctx.send(str(e))
+            print(e)
+        else:
+            cnt += 1
+
+    await ctx.send(f'{cnt}/{len(args)} categories removed from offer')
 
 
 @bot.command(name='rm_offer', help='Remove an offer from your account | !rm_offer OFFER_ID')
