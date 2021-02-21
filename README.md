@@ -39,13 +39,16 @@ A Discord Bot that adds a mutual credit system to your server.
 * Account balances are properly updated (so far -- no edge cases tested yet)
 
 
+## Notes
+You will need at least two users (other than the bot) to use this system.
 
 ## Deploy
 First, set up an application and bot in the Discord developer portal and a guild (server) to use for testing. For info on how to do that you can follow the first part of [this guide](https://realpython.com/how-to-make-a-discord-bot-python/#how-to-make-a-discord-bot-in-the-developer-portal).
 
-You will need at least two users (other than the bot) to use this system.
-
-Create a `.env` file in the root project folder. It should contain the API token for your bot as follows:
-`DISCORD_TOKEN={YOUR_DISCORD_TOKEN_HERE}`
-
-Then run `python bot.py`.
+*TODO: Setting up bot permissions section*
+For now, giving your bot `Administrator` permissions will due.
+Note: You may need to enable `SERVER MEMBERS INTENT` on the bot page.
+Create a `.env` file in the root project folder. It should contain the bot API token for your bot as follows: `DISCORD_TOKEN={YOUR_DISCORD_TOKEN_HERE}`
+Run `python bot.py`.
+In the Discord server you connected the app to, add a new user role `member`.
+Any user that is going to use the system must have the `member` role.
