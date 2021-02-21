@@ -47,8 +47,13 @@ First, set up an application and bot in the Discord developer portal and a guild
 
 *TODO: Setting up bot permissions section*
 For now, giving your bot `Administrator` permissions will due.
+
 Note: You may need to enable `SERVER MEMBERS INTENT` on the bot page.
+
 Create a `.env` file in the root project folder. It should contain the bot API token for your bot as follows: `DISCORD_TOKEN={YOUR_DISCORD_TOKEN_HERE}`
+
 Run `python bot.py`.
+
 In the Discord server you connected the app to, add a new user role `member`.
+
 Any user that is going to use the system must have the `member` role.
