@@ -34,6 +34,12 @@ A Discord Bot that adds a mutual credit system to your server.
 * Denying transactions (denying a buy request) sent to you
 * Account balances are properly updated (so far -- no edge cases tested yet)
 
+## Try me
+The latest version of this project is running on a Discord server for testing and discussion.
+
+Feel free to join and give the system a try:
+
+https://discord.gg/ECKkNrjWrf
 
 ## Notes
 You will need at least two users (other than the bot) to use this system.
