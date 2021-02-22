@@ -54,6 +54,14 @@ Note: You may need to enable `SERVER MEMBERS INTENT` on the bot page.
 
 Create a `.env` file in the root project folder. It should contain the bot API token for your bot as follows: `DISCORD_TOKEN={YOUR_DISCORD_TOKEN_HERE}`
 
+Before you can run the project you will need to install the Discord API wrapper for python:
+```
+pip install -U discord.py
+
+# or if you're on windows
+python -m pip install -U discord.py
+```
+
 Run `python bot.py`.
 
 In the Discord server you connected the app to, add a new user role `member`.
