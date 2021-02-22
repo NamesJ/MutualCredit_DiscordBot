@@ -11,8 +11,8 @@ import uuid
 class CreditSystem (object):
 
     def __init__(self, db_file='credit_system.db'):
-        self.min_balance = -100
-        self.max_balance = 100
+        self.min_balance = -1000
+        self.max_balance = 1000
         self.db_file = db_file
         self._init_db()
 
