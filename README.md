@@ -10,8 +10,6 @@ A Discord Bot that adds a mutual credit system to your server.
   ** User workflow diagrams to make high-level understanding of how things work easier to understand.
 * Data integrity
   ** There is currently little to no data integrity checks for what data is inserted into the database.
-* Refactoring / modularity
-  ** The `credit_system.py` script desperately needs to be broken up into smaller modules. Possible moved away from an object oriented design entirely.
 * Cleaner bot interface
   ** The current interface requires the user to perform a lot of actions by copying unique IDs for things. It would more user-friendly if this were abstracted away.
   ** The results returned from commands are also not all that user friendly as they're usually just python dictionaries.
