@@ -15,7 +15,7 @@ def _create_table(conn, sql):
 
 def init_accounts_table(conn):
     _create_table(conn, ''' CREATE TABLE IF NOT EXISTS accounts (
-                                id text PRIMARY KEY,
+                                id int PRIMARY KEY,
                                 balance integer NOT NULL,
                                 max_balance integer NOT NULL,
                                 min_balance integer NOT NULL
@@ -45,8 +45,8 @@ def init_offers_table(conn):
 def init_transactions_table(conn):
     _create_table(conn, ''' CREATE TABLE IF NOT EXISTS transactions (
                                 id text PRIMARY KEY,
-                                buyer_id text NOT NULL,
-                                seller_id text NOT NULL,
+                                buyer_id int NOT NULL,
+                                seller_id int NOT NULL,
                                 offer_id text NOT NULL,
                                 status text NOT NULL,
                                 start_timestamp int NOT NULL,
