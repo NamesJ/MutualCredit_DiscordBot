@@ -194,6 +194,8 @@ async def mk_buy(ctx, offer_id):
 @commands.has_role('member')
 async def approve_tx(ctx, tx_id):
     member = ctx.guild.get_member(ctx.author.id)
+    buyer_id = cs.getTransactionBuyer(tx_id)
+    buyer = ctx.guild.get_member(buyer_id)
     balance = None
     try:
         cs.approveTransaction(tx_id)
@@ -201,6 +203,7 @@ async def approve_tx(ctx, tx_id):
         await sendDM(member, str(e))
         print(e)
     else:
+        await sendDM(buyer, f'{ctx.author.name} approved your buy request with ID {tx_id}')
         await sendDM(member, f'Transaction {tx_id} approved!')
         balance = cs.getBalance(ctx.author.id)
         await sendDM(member, f'New account balance: ${balance}')
