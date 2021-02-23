@@ -15,6 +15,8 @@ A Discord Bot that adds a mutual credit system to your server.
   ** The results returned from commands are also not all that user friendly as they're usually just python dictionaries.
 * Private bot messaging
   ** At the moment, users can only send commands to the bot from public channels. Some results are sent via direct message to the calling user, but sending commands is not yet possible. Being able to keep all of your mutual credit commands and results from the bot in a single private channel with just yourself and the bot would keep public channels from being overwhelmed and allow for a legible and tidy personal bot history.
+  ** Responses from bot are now sent via DM.
+  ** Commands are still only accepted from public channels.
 * Tests
   ** There are currently no tests. This is... bad.
 * Error handling
