@@ -184,12 +184,10 @@ async def mk_buy(ctx, offer_id):
         await sendDM(member, str(e))
         print(e)
     else:
-        await sendDM(member, f'Transaction ID: {tx_id}')
-        #seller = discord.utils.get(guild.members, name=sellerName)
         seller_id = cs.getOfferSeller(offer_id)
         seller = ctx.guild.get_member(seller_id)
-        tx = cs.getTransaction(tx_id)
-        await sendDM(seller, f'New buy request from {ctx.author.name} for offer with ID {offer_id}:\n{tx}')
+        await sendDM(member, f'You requested to buy {offer_id} from {seller.name}. Transaction ID: {tx_id}')
+        await sendDM(seller, f'New buy request from {ctx.author.name} for offer {offer_id}. Transaction ID: {tx_id}')
 
 
 @bot.command(name='approve', help='Approve a buy request from another user | !approve TX_ID')
