@@ -155,6 +155,18 @@ class CreditSystem (object):
         return tx
 
 
+    def getTransactionBuyer(self, tx_id):
+        with sqlite3.connect(self.db_file) as conn:
+            tx_buyer = db.get_transaction_buyer(conn, tx_id)
+        return tx_buyer
+
+
+    def getTransactionSeller(self, tx_id):
+        with sqlite3.connect(self.db_file) as conn:
+            tx_seller = db.get_transaction_seller(conn, tx_id)
+        return tx_seller
+
+
     def getPendingBuys(self, account_id):
         with sqlite3.connect(self.db_file) as conn:
             buys = db.get_pending_tx_for_buyer(conn, account_id)

@@ -175,6 +175,22 @@ def get_transaction(cursor, tx_id):
     return rows[0]
 
 
+def get_transaction_buyer(conn, tx_id):
+    sql = '''SELECT buyer_id
+             FROM transactions
+             WHERE id=?'''
+    rows = conn.execute(sql, (tx_id,)).fetchall()
+    return rows[0][0]
+
+
+def get_transaction_seller(conn, tx_id):
+    sql = '''SELECT seller_id
+             FROM transactions
+             WHERE id=?'''
+    rows = cursor.execute(sql, (tx_id,)).fetchall()
+    return rows[0][0]
+
+
 def get_transaction_status(cursor, tx_id):
     sql = '''SELECT status
              FROM transactions
