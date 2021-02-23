@@ -1,4 +1,4 @@
-import db
+from . import db
 
 import os
 import sqlite3
