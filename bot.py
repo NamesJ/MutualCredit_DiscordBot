@@ -173,6 +173,20 @@ async def ls_offers(ctx, seller):
         await sendDM(member, f'{offers}')
 
 
+@bot.command(name='ls_range', help='Get min/max balance range for your account | !ls_range')
+@commands.has_role('member')
+async def ls_range(ctx):
+    member = ctx.guild.get_member(ctx.author.id)
+    try:
+        min_balance, max_balance = cs.getAccountRange(ctx.author.id)
+    except Exception as e:
+        await sendDM(member, str(e))
+        print(e)
+    else:
+        await sendDM(member, f'The range for your account is ${min_balance} to ${max_balance}')
+
+
+
 @bot.command(name='buy', help='Send a request to buy an offer from a seller | !buy OFFER_ID')
 @commands.has_role('member')
 async def mk_buy(ctx, offer_id):

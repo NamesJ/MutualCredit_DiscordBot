@@ -123,6 +123,12 @@ class CreditSystem (object):
             db.update_transaction_status(conn, tx_id, 'DENIED')
 
 
+    def getAccountRange(self, account_id):
+        with sqlite3.connect(self.db_file) as conn:
+            result = db.get_account_range(conn, account_id)
+        return result
+
+
     def getOfferCategories(self, offer_id):
         with sqlite3.connect(self.db_file) as conn:
             result = db.get_offer_categories(conn, offer_id)
