@@ -187,7 +187,7 @@ def get_transaction_seller(conn, tx_id):
     sql = '''SELECT seller_id
              FROM transactions
              WHERE id=?'''
-    rows = cursor.execute(sql, (tx_id,)).fetchall()
+    rows = conn.execute(sql, (tx_id,)).fetchall()
     return rows[0][0]
 
 

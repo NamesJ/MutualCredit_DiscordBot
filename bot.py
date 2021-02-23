@@ -210,12 +210,15 @@ async def approve_tx(ctx, tx_id):
 @commands.has_role('member')
 async def cancel_tx(ctx, tx_id):
     member = ctx.guild.get_member(ctx.author.id)
+    seller_id = cs.getTransactionSeller(tx_id)
+    seller = ctx.guild.get_member(seller_id)
     try:
         cs.cancelTransaction(tx_id)
     except Exception as e:
         await sendDM(member, str(e))
         print(e)
     else:
+        await sendDM(seller, f'{ctx.author.name} cancelled their buy request with ID {tx_id}')
         await sendDM(member, f'Transaction {tx_id} cancelled!')
 
 
