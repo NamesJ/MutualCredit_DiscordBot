@@ -3,6 +3,12 @@ A Discord Bot that adds a mutual credit system to your server.
 
 *Note: This project is in very early alpha. It is not yet ready for actual use.*
 
+
+# vouch branch
+This branch includes a *technically* functional implementation of a vouch-based system for granting `member` role to users via a form of social triangulation which is functionally scaled according to member size.
+
+Social triangulation in this context refers to the concept of a subset of existing members vouching for the trustworthiness of a non-member, whereby the other members *trust-by-proxy* the non-member (because of the vouching members). This servers as a mechanism for expanding membership.
+
 ## Todo
 * README
   ** Better info to help devs to get started contributing
