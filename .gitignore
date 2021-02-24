@@ -1,5 +1,6 @@
-# Database file
+# Database files
 credit_system.db
+vouch.db
 
 # sqlite3 helper scripts
 sqldiff.exe

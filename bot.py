@@ -1,25 +1,19 @@
-from mutual_credit.bot import *
-
-
 import os
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 
 
-try: TOKEN
-except NameError: TOKEN = os.getenv('DISCORD_TOKEN')
-
-try: COMMAND_PREFIX
-except NameError: COMMAND_PREFIX = '!'
-
-try: intents
-except NameError: intents = discord.Intents.default()
+load_dotenv()
+TOKEN = os.getenv('DISCORD_TOKEN')
+COMMAND_PREFIX = '!'
+intents = discord.Intents.default()
 intents.members = True
+bot = commands.Bot(command_prefix=COMMAND_PREFIX, intents=intents)
 
-try: bot
-except NameError: commands.Bot(command_prefix=COMMAND_PREFIX, intents=intents)
 
+from mutual_credit.bot import *
+from vouch.bot import *
 
 
 if __name__ == '__main__':
