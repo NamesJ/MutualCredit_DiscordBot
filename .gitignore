@@ -1,5 +1,5 @@
-# Database file
-credit_system.db
+# Database files
+*.db
 
 # sqlite3 helper scripts
 sqldiff.exe
