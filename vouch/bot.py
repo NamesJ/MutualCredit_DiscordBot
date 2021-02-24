@@ -6,20 +6,13 @@ from dotenv import load_dotenv
 import os
 
 
-try: TOKEN
-except:
-    load_dotenv()
-    TOKEN = os.getenv('DISCORD_TOKEN')
-
-try: COMMAND_PREFIX
-except: COMMAND_PREFIX='!'
+load_dotenv()
+TOKEN = os.getenv('DISCORD_TOKEN')
+COMMAND_PREFIX='!'
 
 try: intents
 except NameError: intents = discord.Intents.default()
 finally: intents.members = True
-
-try: bot
-except: bot = commands.Bot(command_prefix=COMMAND_PREFIX, intents=intents)
 
 
 
@@ -37,7 +30,40 @@ async def sendDM(user, message):
     await user.dm_channel.send(message)
 
 
-@bot.command(name='vouch', help='Create or change vouch for another user | !vouch @USER [n/no|p/pass|y/yes]')
+@commands.command(name='bootstrap_vouch', help='Bootstrap yourself as first member of vouch system | !bootstrap_vouch')
+@commands.has_role('admin')
+async def bootstrap_vouch(ctx):
+    member = ctx.guild.get_member(ctx.author.id)
+    try:
+        vs.bootstrap(ctx.author.id)
+    except Exception as e:
+        await sendDM(member, str(e))
+    else:
+        await sendDM(member, f'Bootstrap was successful. You are the first member!')
+
+
+@commands.command(name='check_membership', help='Shows your current membership status | !check_membership')
+async def check_membership(ctx):
+    member = ctx.guild.get_member(ctx.author.id)
+    if vs.isMember(ctx.author.id):
+        await sendDM(member, f'You are currently a member!')
+    else:
+        await sendDM(member, f'You are not currently a member.')
+
+
+@commands.command(name='check_vouches', help='Shows how many vouches you have and need | !check_vouches')
+async def check_vouches(ctx):
+    member = ctx.guild.get_member(ctx.author.id)
+    vouchee_id = ctx.author.id
+    if vs.isMember(vouchee_id):
+        await sendDM(member, f'You are already a member!')
+    else:
+        actual = vs.getVoucheeValue(vouchee_id)
+        required = vs.thresholdApprove()
+        await sendDM(member, f'You currently have {actual}/{required} vouches.')
+
+
+@commands.command(name='vouch', help='Create or change vouch for another user | !vouch @USER [n/no|p/pass|y/yes]')
 @commands.has_role('member')
 async def vouch(ctx, mention, value):
     member = ctx.guild.get_member(ctx.author.id)
@@ -60,26 +86,24 @@ async def vouch(ctx, mention, value):
         membership_after = vs.isMember(vouchee_id)
         if membership_after and not membership_before: # new member
             new_member = ctx.guild.get_member(vouchee_id)
-            await sendDM(f'Congratulations, you are now a member')
+
+            for role in ctx.guild.roles:
+                if role.name != 'member': continue
+                await new_member.add_roles(role)
+                
+            await sendDM(new_member, f'Congratulations, you are now a member')
 
 
-@bot.command(name='check_vouches', help='Shows how many vouches you have and need | !check_vouches')
-async def vouch(ctx):
-    member = ctx.guild.get_member(ctx.author.id)
-    vouchee_id = ctx.author.id
-    actual = vs.getVoucheeValue()
-    required = vs.thresholdApprove()
-    await sendDM(member, f'You currently have {actual}/{required} vouches.')
-
-
-@bot.command(name='check_membership', help='Shows your current membership status | !check_membership')
-async def check_membership(ctx):
-    member = ctx.guild.get_member(ctx.author.id)
-    if vs.isMember():
-        await sendDM(member, f'You are currently a member!')
-    else:
-        await sendDM(member, f'You are not currently a member.')
+BOT_COMMANDS = [
+    bootstrap_vouch,
+    check_membership,
+    check_vouches,
+    vouch
+]
 
 
 if __name__ == '__main__':
+    bot = commands.Bot(command_prefix=COMMAND_PREFIX, intents=intents)
+    for cmd in BOT_COMMANDS:
+        bot.add_command(cmd)
     bot.run(TOKEN)

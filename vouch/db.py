@@ -98,7 +98,8 @@ def get_member(conn, member_id):
              FROM members
              WHERE id=?'''
     row = conn.execute(sql, (member_id,)).fetchone()
-    print(f'get_member: row={row}')
+    if row:
+        row = row[0]
     return row
 
 

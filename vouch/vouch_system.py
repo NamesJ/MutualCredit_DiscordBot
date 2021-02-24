@@ -124,7 +124,7 @@ def bootstrap(member_id):
 
 def getVoucheeValue(vouchee_id):
     with db.connect() as conn:
-        return db.get_vouchee_value(vouchee_id)
+        return db.get_vouchee_value(conn, vouchee_id)
 
 
 def isMember(vouchee_id):
