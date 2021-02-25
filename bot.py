@@ -266,7 +266,22 @@ class MutualCreditClient (discord.Client):
 
 
     async def handle_remove_categories(self, message):
-        await message.reply('This command is not yet implemented.')
+        args = shlex.split(message.content)
+        if len(args) < 3:
+            await message.reply(f'I think you forgot something -- you didn\'t give me enough arguments.')
+            return
+
+        user = message.author
+        offer_id, categories = args[1], args[2:]
+
+        try:
+            cs.removeCategoriesFromOffer(user.id, offer_id, categories)
+        except UserPermissionError as e:
+            await message.reply('You are not allowed to edit someone else\'s offer')
+        else:
+            categories = cs.getOfferCategories(offer_id)
+            categories = ', '.join(categories)
+            await message.reply(f'Offer now has the following categories: {categories}')
 
 
     async def handle_show_range(self, message):

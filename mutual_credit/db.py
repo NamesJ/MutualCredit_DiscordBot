@@ -102,10 +102,10 @@ def delete_offer(cursor, offer_id):
     cursor.execute(sql, (offer_id,))
 
 
-def delete_offer_category(conn, offer_category):
+def delete_offer_category(conn, offer_id, category):
     sql = '''DELETE FROM offer_categories
              WHERE offer_id=? AND category=?'''
-    conn.execute(sql, offer_category)
+    conn.execute(sql, (offer_id, category))
 
 
 def get_account_balance(cursor, account_id):

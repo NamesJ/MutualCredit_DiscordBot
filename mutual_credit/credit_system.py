@@ -267,10 +267,45 @@ def isMember(account_id):
     return True
 
 
-def removeCategoryFromOffer(offerId, category):
-    offer_category = (offerId, category)
+def removeCategoryFromOffer(member_id, offer_id, category):
     with db.connect() as conn:
-        db.delete_offer_category(conn, offer_category)
+        seller_id = db.get_offer_seller(conn, offer_id)
+        current_categories = db.get_offer_categories(conn, offer_id)
+
+    if seller_id is None:
+        raise OfferIDError(f'Offer with ID {offer_id} does not exist.')
+
+    if member_id != seller_id:
+        raise UserPermissionError(f'User tried to alter offer of another user.')
+
+    if category not in current_categories:
+        return
+
+    with db.connect() as conn:
+        db.delete_offer_category(conn, offer_id, category)
+
+
+def removeCategoriesFromOffer(member_id, offer_id, categories):
+    with db.connect() as conn:
+        seller_id = db.get_offer_seller(conn, offer_id)
+        current_categories = db.get_offer_categories(conn, offer_id)
+
+    if seller_id is None:
+        raise OfferIDError(f'Offer with ID {offer_id} does not exist')
+
+    if member_id != seller_id:
+        raise UserPermissionError('User tried to alter another members offer')
+
+
+    with db.connect() as conn:
+        removed = []
+
+        for category in categories:
+            if category in current_categories and category not in removed:
+                continue
+
+            db.delete_offer_category(conn, offer_id, category)
+            removed.append(category)
 
 
 
