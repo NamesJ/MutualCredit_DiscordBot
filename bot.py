@@ -14,6 +14,7 @@ intents.members = True
 bot = commands.Bot(command_prefix=COMMAND_PREFIX, intents=intents)
 
 
+
 def mentionToId(mention):
     userId = mention
     if userId.startswith('<@') and userId.endswith('>'):
@@ -33,7 +34,32 @@ async def on_ready():
     print(f'{bot.user.name} has connected to Discord!')
 
 
-@bot.command(name='add_cats', help='Add categories to an existing offer | !add_cats OFFER_ID CAT1 CAT2 CAT3...')
+async def on_balance(user):
+    try:
+        balance = cs.getBalance(user.id)
+    except Exception as e:
+        print(str(e))
+        await sendDM(user, str(e))
+    else:
+        await sendDM(user, f'Balance: ${balance}')
+
+
+async def on_kill(user):
+    print(f'User {user.name} with ID {user.id} triggered kill command.')
+    exit()
+
+
+@bot.event
+async def on_message(message):
+    user = message.author
+    text = message.content
+    if text.startswith('!balance'):
+        await on_balance(user)
+    if text.startswith('!kill'):
+        await on_kill(user)
+
+
+@commands.command(name='add_cats', help='Add categories to an existing offer | !add_cats OFFER_ID CAT1 CAT2 CAT3...')
 @commands.has_role('member')
 async def add_cats(ctx, offer_id, *args):
     member = ctx.guild.get_member(ctx.author.id)
@@ -51,7 +77,7 @@ async def add_cats(ctx, offer_id, *args):
     await sendDM(member, f'{cnt}/{len(args)} categories added to offer with ID {offer_id}')
 
 
-@bot.command(name='approve', help='Approve a buy request from another user | !approve TX_ID')
+@commands.command(name='approve', help='Approve a buy request from another user | !approve TX_ID')
 @commands.has_role('member')
 async def approve_tx(ctx, tx_id):
     member = ctx.guild.get_member(ctx.author.id)
@@ -70,22 +96,7 @@ async def approve_tx(ctx, tx_id):
         await sendDM(member, f'New account balance: ${balance}')
 
 
-@bot.command(name='balance', help='Show your account balance | !get_account_min_balance')
-@commands.has_role('member')
-async def balance(ctx):
-    member = ctx.guild.get_member(ctx.author.id)
-    balance = None
-    try:
-        balance = cs.getBalance(ctx.author.id)
-    except Exception as e:
-        await sendDM(member, str(e))
-        print(e)
-        raise
-    else:
-        await sendDM(member, f'Account balance: ${balance}')
-
-
-@bot.command(name='buy', help='Send a request to buy an offer from a seller | !buy OFFER_ID')
+@commands.command(name='buy', help='Send a request to buy an offer from a seller | !buy OFFER_ID')
 @commands.has_role('member')
 async def mk_buy(ctx, offer_id):
     member = ctx.guild.get_member(ctx.author.id)
@@ -102,7 +113,7 @@ async def mk_buy(ctx, offer_id):
         await sendDM(seller, f'New buy request from {ctx.author.name} for offer {offer_id}. Transaction ID: {tx_id}')
 
 
-@bot.command(name='cancel', help='Cancel your pending buy request | !cancel TX_ID')
+@commands.command(name='cancel', help='Cancel your pending buy request | !cancel TX_ID')
 @commands.has_role('member')
 async def cancel_tx(ctx, tx_id):
     member = ctx.guild.get_member(ctx.author.id)
@@ -118,7 +129,7 @@ async def cancel_tx(ctx, tx_id):
         await sendDM(member, f'Transaction {tx_id} cancelled!')
 
 
-@bot.command(name='deny', help='Deny a request to buy | !deny TX_ID')
+@commands.command(name='deny', help='Deny a request to buy | !deny TX_ID')
 @commands.has_role('member')
 async def deny_tx(ctx, tx_id):
     member = ctx.guild.get_member(ctx.author.id)
@@ -134,13 +145,7 @@ async def deny_tx(ctx, tx_id):
         await sendDM(member, f'Transaction {tx_id} denied!')
 
 
-@bot.command(name='kill', help='Kill bot process')
-@commands.has_role('admin')
-async def kill_bot(ctx):
-    exit()
-
-
-@bot.command(name='ls_cats', help='List categories associated with an existing offer | !ls_cats OFFER_ID')
+@commands.command(name='ls_cats', help='List categories associated with an existing offer | !ls_cats OFFER_ID')
 @commands.has_role('member')
 async def ls_cats(ctx, offer_id):
     member = ctx.guild.get_member(ctx.author.id)
@@ -156,7 +161,7 @@ async def ls_cats(ctx, offer_id):
 
 
 # Output needs better formatting
-@bot.command(name='ls_offers', help='Get offers for a seller\'s account | !ls_offers SELLER')
+@commands.command(name='ls_offers', help='Get offers for a seller\'s account | !ls_offers SELLER')
 @commands.has_role('member')
 async def ls_offers(ctx, seller):
     member = ctx.guild.get_member(ctx.author.id)
@@ -171,7 +176,7 @@ async def ls_offers(ctx, seller):
         await sendDM(member, f'{offers}')
 
 
-@bot.command(name='ls_range', help='Get min/max balance range for your account | !ls_range')
+@commands.command(name='ls_range', help='Get min/max balance range for your account | !ls_range')
 @commands.has_role('member')
 async def ls_range(ctx):
     member = ctx.guild.get_member(ctx.author.id)
@@ -184,7 +189,7 @@ async def ls_range(ctx):
         await sendDM(member, f'The range for your account is ${min_balance} to ${max_balance}')
 
 
-@bot.command(name='mk_account', help='Create a new mutual credit account | !mk_account')
+@commands.command(name='mk_account', help='Create a new mutual credit account | !mk_account')
 @commands.has_role('member')
 async def mk_account(ctx):
     member = ctx.guild.get_member(ctx.author.id)
@@ -198,7 +203,7 @@ async def mk_account(ctx):
 
 
 # Anything special needed for multiword arguments (space delimited but quoted)?
-@bot.command(name='mk_offer', help='Create a new offer to your account | !mk_offer DESC PRICE TITLE')
+@commands.command(name='mk_offer', help='Create a new offer to your account | !mk_offer DESC PRICE TITLE')
 @commands.has_role('member')
 async def mk_offer(ctx, description, price: int, title):
     member = ctx.guild.get_member(ctx.author.id)
@@ -212,7 +217,7 @@ async def mk_offer(ctx, description, price: int, title):
         await sendDM(member, f'Offer created with ID {offerId}')
 
 
-@bot.command(name='rm_cats', help='Remove categories from an existing offer | !rm_cats OFFER_ID CAT1 CAT2 CAT3...')
+@commands.command(name='rm_cats', help='Remove categories from an existing offer | !rm_cats OFFER_ID CAT1 CAT2 CAT3...')
 @commands.has_role('member')
 async def rm_cats(ctx, offer_id, *args):
     member = ctx.guild.get_member(ctx.author.id)
@@ -230,7 +235,7 @@ async def rm_cats(ctx, offer_id, *args):
     await sendDM(member, f'{cnt}/{len(args)} categories removed from offer with ID {offer_id}')
 
 
-@bot.command(name='rm_offer', help='Remove an offer from your account | !rm_offer OFFER_ID')
+@commands.command(name='rm_offer', help='Remove an offer from your account | !rm_offer OFFER_ID')
 @commands.has_role('member')
 async def rm_offer(ctx, offer_id):
     member = ctx.guild.get_member(ctx.author.id)
@@ -246,6 +251,26 @@ async def rm_offer(ctx, offer_id):
         await sendDM(member, 'Offer has been removed!')
 
 
+BOT_COMMANDS = [
+    add_cats,
+    approve_tx,
+    balance,
+    mk_buy,
+    cancel_tx,
+    deny_tx,
+    kill_bot,
+    ls_cats,
+    ls_offers,
+    ls_range,
+    mk_account,
+    mk_offer,
+    rm_cats,
+    rm_offer
+]
+
 
 if __name__ == '__main__':
+    for cmd in BOT_COMMANDS:
+        bot.add_command(cmd)
+
     bot.run(TOKEN)
