@@ -95,6 +95,10 @@ class MutualCreditClient (discord.Client):
         await message.reply(response)
 
 
+    async def handle_available_balance(self, message):
+        await message.reply('This command is not yet implemented.')
+
+
     async def handle_balance(self, message): # member-only command
         balance = cs.getBalance(message.author.id)
         await message.reply(f'Your balance is ${balance}')
@@ -133,13 +137,49 @@ class MutualCreditClient (discord.Client):
                 response += f' Sent buy request for {offer_id}.\n'
                 response += f'New available balance: ${available_balance}\n'
 
+        # remove last line break
+        response = response[:-1]
+        await message.reply(response)
+
+
+    async def handle_cancel(self, message):
+        await message.reply('This command is not yet implemented.')
+
+
+    async def handle_create_account(self, message):
+        await message.reply('This command is not yet implemented.')
+
+
+    async def handle_create_offer(self, message):
+        await message.reply('This command is not yet implemented.')
+
+
+    async def handle_delete_offer(self, message):
+        await message.reply('This command is not yet implemented.')
+
+
+    async def handle_deny(self, message):
+        await message.reply('This command is not yet implemented.')
+
 
     async def handle_kill(self, message): # member-only command
         quit()
 
 
-    async def handle_hello(self, message):
-        await message.reply('Hi!', mention_author=True)
+    async def handle_list_categories(self, message):
+        await message.reply('This command is not yet implemented.')
+
+
+    async def handle_list_offers(self, message):
+        await message.reply('This command is not yet implemented.')
+
+
+    async def handle_remove_categories(self, message):
+        await message.reply('This command is not yet implemented.')
+
+
+    async def handle_show_range(self, message):
+        await message.reply('This command is not yet implemented.')
 
 
     async def on_ready(self):
