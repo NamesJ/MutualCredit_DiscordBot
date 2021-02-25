@@ -19,11 +19,6 @@ class MutualCreditClient (discord.Client):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.commands = []
-
-        for name in vars(self):
-            if name.startswith('handle_'):
-                self.commands.append(name[7:])
 
 
     async def run_command(self, message):
@@ -170,8 +165,9 @@ class MutualCreditClient (discord.Client):
     async def handle_help(self, message):
         response = 'Commands:'
 
-        for cmd in self.commands:
-            response += f'\n{cmd}'
+        for name in dir(self):
+            if name.startswith('handle_'):
+                response += '\n!' + name[7:]
 
         await message.reply(response)
 
