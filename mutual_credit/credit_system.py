@@ -120,7 +120,7 @@ def createOffer(account_id, description, price, title):
 # Should use a "pending balance" rather than actual balance of buyer
 def createTransaction(buyer_id, offer_id):
     with db.connect() as conn:
-        buyer_balance = db.get_account_balance(conn, buyer_id)
+        buyer_balance = getAvailableBalance(conn, buyer_id)
         buyer_min, buyer_max = db.get_account_range(conn, buyer_id)
         price = db.get_offer_price(conn, offer_id)
         seller_id = db.get_offer_seller(conn, offer_id)
