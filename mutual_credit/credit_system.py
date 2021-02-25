@@ -178,6 +178,20 @@ def getBalance(account_id):
     return balance
 
 
+# available balance = balance - sum(pending buy requests)
+def getAvailableBalance(account_id):
+    with db.connect() as conn:
+        available_balance = db.get_account_balance(conn, account_id)
+        pending_buys = db.get_pending_tx_for_buyer(conn, account_id)
+
+        for tx in pending_buys:
+            offer_id = tx[3]
+            price = db.get_offer_price(offer_id)
+            available_balance -= price
+
+    return available_balance
+
+
 def getOffers(account_id):
     with db.connect() as conn:
         offers = db.get_offers_by_seller(conn, account_id)
