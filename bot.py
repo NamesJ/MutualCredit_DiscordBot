@@ -100,7 +100,40 @@ class MutualCreditClient (discord.Client):
 
 
     async def handle_buy(self, message):
+        args = shlex.split(message.content)
+        if len(args) < 2:
+            await message.reply(f'I think you forgot something -- you didn\'t give me enough arguments.')
+            return
 
+        user = message.author
+        offer_ids = args[1:]
+
+        total_offers = len(offer_ids)
+        response = ''
+        for i in range(total_offers):
+            offer_id = offer_ids[i]
+
+            if total_offers > 1:
+                response += f'{i+1}/{total_offers}:'
+
+            try:
+                cs.createTransaction(user.id, offer_id)
+                balance = cs.getBalance(user.id)
+            except TransactionIDError as e:
+                response += f' Skipping transaction {offer_id}.'
+                response += ' A transaction with that ID doesn\'t exist.\n'
+            except MaxBalanceError as e:
+                response += f' Skipping transaction {offer_id}.'
+                response += ' You\'re balance is too high.\n'
+            except MinBalanceError as e:
+                response += f' Skipping transaction {offer_id}.'
+                response += ' Buyer\'s balance is too low.\n'
+            except UserPermissionError as e:
+                response += f' Skipping transaction {offer_id}.'
+                response += ' You are not the seller for this transaction.\n'
+            else:
+                response += f' Approved transaction {offer_id}.\n'
+                response += f'New balance: ${balance}\n'
 
 
     async def handle_kill(self, message): # member-only command
