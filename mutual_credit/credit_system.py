@@ -2,6 +2,7 @@ from . import db
 from .errors import (
     MaxBalanceError,
     MinBalanceError,
+    OfferIDError,
     SelfTransactionError,
     TransactionIDError,
     TransactionStatusError,
@@ -182,9 +183,15 @@ def getAccountRange(account_id):
 
 def getOfferCategories(offer_id):
     with db.connect() as conn:
+        seller_id = db.get_offer_seller(conn, offer_id)
         result = db.get_offer_categories(conn, offer_id)
+
+    if len(result) == 0:
+        raise OfferIDError(f'Offer with ID {offer_id} does not exist')
+
     if len(result) > 0:
         result = list([item[0] for item in result])
+
     return result
 
 

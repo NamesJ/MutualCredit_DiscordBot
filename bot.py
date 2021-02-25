@@ -2,6 +2,7 @@ from mutual_credit import credit_system as cs
 from mutual_credit.errors import (
     MaxBalanceError,
     MinBalanceError,
+    OfferIDError,
     SelfTransactionError,
     TransactionIDError,
     TransactionStatusError,
@@ -211,7 +212,21 @@ class MutualCreditClient (discord.Client):
 
 
     async def handle_list_categories(self, message):
-        await message.reply('This command is not yet implemented.')
+        args = shlex.split(message.content)
+        if len(args) != 2:
+            await message.reply(f'I think you forgot something -- you didn\'t give me enough arguments.')
+            return
+
+        user = message.author
+        offer_id = args[1]
+
+        try:
+            categories = cs.getOfferCategories(offer_id)
+            categories = ', '.join(categories)
+        except OfferIDError as e:
+            await message.reply(f'An offer with ID {offer_id} doesn\'t exist.')
+        else:
+            await message.reply(f'Offer {offer_id} categories: {categories}')
 
 
     async def handle_list_offers(self, message):
