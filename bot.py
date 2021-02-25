@@ -68,7 +68,7 @@ class MutualCreditClient (discord.Client):
             tx_id = tx_ids[i]
 
             if total_txs > 1:
-                response += f'{i+1}/{total}:'
+                response += f'{i+1}/{total_txs}:'
 
             try:
                 cs.approveTransaction(user.id, tx_id)
