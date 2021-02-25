@@ -143,7 +143,41 @@ class MutualCreditClient (discord.Client):
 
 
     async def handle_cancel(self, message):
-        await message.reply('This command is not yet implemented.')
+        args = shlex.split(message.content)
+        if len(args) < 2:
+            await message.reply(f'I think you forgot something -- you didn\'t give me enough arguments.')
+            return
+
+        user = message.author
+        tx_ids = args[1:]
+
+        total_txs = len(tx_ids)
+        response = ''
+        for i in range(total_txs):
+            tx_id = tx_ids[i]
+
+            if total_txs > 1:
+                response += f'{i+1}/{total_txs}:'
+
+            try:
+                cs.cancelTransaction(user.id, tx_id)
+                balance = cs.getAvailableBalance(user.id)
+            except TransactionIDError as e:
+                response += f' Skipping transaction {tx_id}.'
+                response += ' A transaction with that ID doesn\'t exist.\n'
+            except UserPermissionError as e:
+                response += f' Skipping transaction {tx_id}.'
+                response += ' You are not the buyer for this transaction.\n'
+            except TransactionStatusError as e:
+                response += f' Skipping transaction {tx_id}.'
+                response += ' Transaction is not pending.'
+            else:
+                response += f' Cancelled transaction {tx_id}.\n'
+                response += f'New available balance: ${balance}\n'
+
+        # remove last line break
+        response = response[:-1]
+        await message.reply(response)
 
 
     async def handle_create_account(self, message):
