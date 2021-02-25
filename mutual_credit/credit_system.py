@@ -1,5 +1,6 @@
 from . import db
 from .errors import (
+    AccountIDError,
     MaxBalanceError,
     MinBalanceError,
     OfferIDError,
@@ -215,9 +216,13 @@ def getAvailableBalance(account_id):
     return available_balance
 
 
-def getOffers(account_id):
+def getOffers(seller_id):
+    if not isMember(seller_id):
+        raise AccountIDError(f'No account with ID {seller_id} exists')
+
     with db.connect() as conn:
-        offers = db.get_offers_by_seller(conn, account_id)
+        offers = db.get_offers_by_seller(conn, seller_id)
+
     return offers
 
 

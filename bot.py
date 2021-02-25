@@ -1,5 +1,6 @@
 from mutual_credit import credit_system as cs
 from mutual_credit.errors import (
+    AccountIDError,
     MaxBalanceError,
     MinBalanceError,
     OfferIDError,
@@ -13,6 +14,16 @@ import discord
 from dotenv import load_dotenv
 import os
 import shlex
+
+
+
+def mentionToId(mention):
+    userId = mention
+    if userId.startswith('<@') and userId.endswith('>'):
+        userId = userId[2:-1]
+    if userId.startswith('!'):
+        userId = userId[1:]
+    return int(userId)
 
 
 
@@ -214,7 +225,7 @@ class MutualCreditClient (discord.Client):
     async def handle_list_categories(self, message):
         args = shlex.split(message.content)
         if len(args) != 2:
-            await message.reply(f'I think you forgot something -- you didn\'t give me enough arguments.')
+            await message.reply(f'I think you forgot something -- that\'s not the right number of arguments.')
             return
 
         user = message.author
@@ -230,7 +241,28 @@ class MutualCreditClient (discord.Client):
 
 
     async def handle_list_offers(self, message):
-        await message.reply('This command is not yet implemented.')
+        args = shlex.split(message.content)
+        if len(args) != 2:
+            await message.reply(f'That\'s not the right number of arguments.')
+
+        user = message.author
+        mention = args[1]
+        seller_id = mentionToId(mention)
+
+        try:
+            offers = cs.getOffers(seller_id)
+        except AccountIDError as e:
+            await message.reply(f'There is no seller with that ID.')
+        else:
+            response = '\n'
+
+            for offer in offers:
+                offer_id, seller_id, description, price, title = offer
+                response += f'{title} | ${price}\n{description}\n{offer_id}\n\n'
+
+            response = response[:-2]
+
+            await message.reply(response)
 
 
     async def handle_remove_categories(self, message):
