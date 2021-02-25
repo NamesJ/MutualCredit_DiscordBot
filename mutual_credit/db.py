@@ -122,6 +122,8 @@ def get_account_range(cursor, account_id):
              FROM accounts
              WHERE id=?'''
     rows = cursor.execute(sql, (account_id,)).fetchall()
+    if len(rows) == 0:
+        return None
     return rows[0]
 
 

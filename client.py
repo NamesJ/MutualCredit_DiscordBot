@@ -34,7 +34,6 @@ class MutualCreditClient (discord.Client):
 
 
     async def run_command(self, message):
-
         args = shlex.split(message.content)
         cmd = args[0][1:]
         try:
@@ -108,7 +107,7 @@ class MutualCreditClient (discord.Client):
 
 
     async def handle_balance(self, message): # member-only command
-        user.id = message.author.id
+        user = message.author
         balance = cs.getBalance(user.id)
         available = cs.getAvailableBalance(user.id)
         await message.reply(f'\nBalance: ${balance}\nAvailable: ${available}')
@@ -283,7 +282,18 @@ class MutualCreditClient (discord.Client):
 
 
     async def handle_show_range(self, message):
-        await message.reply('This command is not yet implemented.')
+        args = shlex.split(message.content)
+        if len(args) > 1:
+            await message.reply(f'This command takes no arguments.')
+
+        user = message.author
+
+        try:
+            min_balance, max_balance = cs.getAccountRange(user.id)
+        except AccountIDError as e:
+            await message.reply('You don\'t seem to have an account.')
+        else:
+            await message.reply(f'${min_balance} to ${max_balance}')
 
 
     async def on_ready(self):

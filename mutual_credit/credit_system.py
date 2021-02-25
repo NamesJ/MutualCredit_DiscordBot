@@ -179,6 +179,10 @@ def denyTransaction(tx_id):
 def getAccountRange(account_id):
     with db.connect() as conn:
         result = db.get_account_range(conn, account_id)
+
+    if result is None:
+        raise AccountIDError(f'Account with ID {account_id} does not exist.')
+
     return result
 
 
