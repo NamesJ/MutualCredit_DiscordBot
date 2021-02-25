@@ -113,6 +113,8 @@ def get_account_balance(cursor, account_id):
              FROM accounts
              WHERE id=?'''
     rows = cursor.execute(sql, (account_id,)).fetchall()
+    if len(rows) == 0:
+        return
     return rows[0][0]
 
 

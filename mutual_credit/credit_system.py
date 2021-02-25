@@ -124,7 +124,13 @@ def cancelTransaction(account_id, tx_id):
 def createAccount(account_id):
     account = (account_id, 0, DFLT_CONFIG['max_balance'],
                                                     DFLT_CONFIG['min_balance'])
+
     with db.connect() as conn:
+        balance = db.get_account_balance(conn, account_id)
+
+        if balance is not None: # account already exists
+            raise AccountIDError(f'Account with ID {account_id} already exists.')
+
         db.create_account(conn, account)
 
 

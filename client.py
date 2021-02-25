@@ -36,10 +36,15 @@ class MutualCreditClient (discord.Client):
     async def run_command(self, message):
         args = shlex.split(message.content)
         cmd = args[0][1:]
+        user = message.author
+
         try:
+            # non-member commands
             func = getattr(self, 'handle_' + cmd)
-            if not cs.isMember(message.author.id): # membership check
-                raise UserPermissionError('You must be a member to do that')
+            # membership check for members-only functions
+            if cmd not in ['create_account']:
+                if not cs.isMember(user.id):
+                    raise UserPermissionError('You must be a member to do that')
         except AttributeError as e:
             await message.reply(f'I don\'t know the command {cmd}')
         else:
@@ -190,7 +195,14 @@ class MutualCreditClient (discord.Client):
 
 
     async def handle_create_account(self, message):
-        await message.reply('This command is not yet implemented.')
+        user = message.author
+
+        try:
+            cs.createAccount(user.id)
+        except AccountIDError as e:
+            await message.reply('You already have an account.')
+        else:
+            await message.reply('Account created!')
 
 
     async def handle_create_offer(self, message):
@@ -206,11 +218,17 @@ class MutualCreditClient (discord.Client):
 
 
     async def handle_help(self, message):
-        response = 'Commands:'
+        cmds = []
 
+        # handle_ commands
         for name in dir(self):
             if name.startswith('handle_'):
-                response += '\n!' + name[7:]
+                #response += '\n!' + name[7:]
+                cmds.append('!' + name[7:])
+
+        # build response message
+        response = 'Commands:'
+        response += '\n'.join(sorted(cmds))
 
         await message.reply(response)
 
