@@ -1,276 +1,138 @@
 from mutual_credit import credit_system as cs
+from mutual_credit.errors import (
+    MaxBalanceError,
+    MinBalanceError,
+    TransactionIDError,
+    TransactionStatusError,
+    UserPermissionError
+)
 
 import discord
-from discord.ext import commands
 from dotenv import load_dotenv
 import os
-
-
-load_dotenv()
-TOKEN = os.getenv('DISCORD_TOKEN')
-COMMAND_PREFIX='!'
-intents = discord.Intents.default()
-intents.members = True
-bot = commands.Bot(command_prefix=COMMAND_PREFIX, intents=intents)
+import shlex
 
 
 
-def mentionToId(mention):
-    userId = mention
-    if userId.startswith('<@') and userId.endswith('>'):
-        userId = userId[2:-1]
-    if userId.startswith('!'):
-        userId = userId[1:]
-    return int(userId)
+class MutualCreditClient (discord.Client):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
 
-async def sendDM(user, message):
-    await user.create_dm()
-    await user.dm_channel.send(message)
+    async def handle_command(self, message):
 
-
-@bot.event
-async def on_ready():
-    print(f'{bot.user.name} has connected to Discord!')
-
-
-async def on_balance(user):
-    try:
-        balance = cs.getBalance(user.id)
-    except Exception as e:
-        print(str(e))
-        await sendDM(user, str(e))
-    else:
-        await sendDM(user, f'Balance: ${balance}')
-
-
-async def on_kill(user):
-    print(f'User {user.name} with ID {user.id} triggered kill command.')
-    exit()
-
-
-@bot.event
-async def on_message(message):
-    user = message.author
-    text = message.content
-    if text.startswith('!balance'):
-        await on_balance(user)
-    if text.startswith('!kill'):
-        await on_kill(user)
-
-
-@commands.command(name='add_cats', help='Add categories to an existing offer | !add_cats OFFER_ID CAT1 CAT2 CAT3...')
-@commands.has_role('member')
-async def add_cats(ctx, offer_id, *args):
-    member = ctx.guild.get_member(ctx.author.id)
-    cnt = 0
-
-    for category in args:
+        args = shlex.split(message.content)
+        cmd = args[0][1:]
         try:
-            cs.addCategoryToOffer(offer_id, category)
-        except Exception as e:
-            await sendDM(member, str(e))
-            print(e)
+            func = getattr(self, 'handle_' + cmd)
+            if not cs.isMember(message.author.id): # membership check
+                raise UserPermissionError('You must be a member to do that')
+        except AttributeError as e:
+            await message.reply(f'I don\'t know the command {cmd}')
         else:
-            cnt += 1
-
-    await sendDM(member, f'{cnt}/{len(args)} categories added to offer with ID {offer_id}')
+            await func(message)
 
 
-@commands.command(name='approve', help='Approve a buy request from another user | !approve TX_ID')
-@commands.has_role('member')
-async def approve_tx(ctx, tx_id):
-    member = ctx.guild.get_member(ctx.author.id)
-    buyer_id = cs.getTransactionBuyer(tx_id)
-    buyer = ctx.guild.get_member(buyer_id)
-    balance = None
-    try:
-        cs.approveTransaction(tx_id)
-    except Exception as e:
-        await sendDM(member, str(e))
-        print(e)
-    else:
-        await sendDM(buyer, f'{ctx.author.name} approved your buy request with ID {tx_id}')
-        await sendDM(member, f'Transaction {tx_id} approved!')
-        balance = cs.getBalance(ctx.author.id)
-        await sendDM(member, f'New account balance: ${balance}')
+    async def handle_add_cats(self, message):
+        args = shlex.split(message.content)
+        if len(args) < 3:
+            await message.reply(f'I think you forgot something -- you didn\'t give me enough arguments.')
+            return
 
+        user = message.author
+        offer_id, categories = args[1], args[2:]
 
-@commands.command(name='buy', help='Send a request to buy an offer from a seller | !buy OFFER_ID')
-@commands.has_role('member')
-async def mk_buy(ctx, offer_id):
-    member = ctx.guild.get_member(ctx.author.id)
-    tx_id = None
-    try:
-        tx_id = cs.createTransaction(ctx.author.id, offer_id)
-    except Exception as e:
-        await sendDM(member, str(e))
-        print(e)
-    else:
-        seller_id = cs.getOfferSeller(offer_id)
-        seller = ctx.guild.get_member(seller_id)
-        await sendDM(member, f'You requested to buy {offer_id} from {seller.name}. Transaction ID: {tx_id}')
-        await sendDM(seller, f'New buy request from {ctx.author.name} for offer {offer_id}. Transaction ID: {tx_id}')
-
-
-@commands.command(name='cancel', help='Cancel your pending buy request | !cancel TX_ID')
-@commands.has_role('member')
-async def cancel_tx(ctx, tx_id):
-    member = ctx.guild.get_member(ctx.author.id)
-    seller_id = cs.getTransactionSeller(tx_id)
-    seller = ctx.guild.get_member(seller_id)
-    try:
-        cs.cancelTransaction(tx_id)
-    except Exception as e:
-        await sendDM(member, str(e))
-        print(e)
-    else:
-        await sendDM(seller, f'{ctx.author.name} cancelled their buy request with ID {tx_id}')
-        await sendDM(member, f'Transaction {tx_id} cancelled!')
-
-
-@commands.command(name='deny', help='Deny a request to buy | !deny TX_ID')
-@commands.has_role('member')
-async def deny_tx(ctx, tx_id):
-    member = ctx.guild.get_member(ctx.author.id)
-    buyer_id = cs.getTransactionBuyer(tx_id)
-    buyer = ctx.guild.get_member(buyer_id)
-    try:
-        cs.denyTransaction(tx_id)
-    except Exception as e:
-        await sendDM(member, str(e))
-        print(e)
-    else:
-        await sendDM(buyer, f'{ctx.author.name} denied your buy request with ID {tx_id}')
-        await sendDM(member, f'Transaction {tx_id} denied!')
-
-
-@commands.command(name='ls_cats', help='List categories associated with an existing offer | !ls_cats OFFER_ID')
-@commands.has_role('member')
-async def ls_cats(ctx, offer_id):
-    member = ctx.guild.get_member(ctx.author.id)
-    try:
-        categories = cs.getOfferCategories(offer_id)
-    except Exception as e:
-        await sendDM(member, str(e))
-        print(e)
-    else:
-        if len(categories) > 0:
+        try:
+            cs.addCategoriesToOffer(user.id, offer_id, categories)
+        except UserPermissionError as e:
+            await message.reply('You are not allowed to edit someone else\'s offer')
+        else:
+            categories = cs.getOfferCategories(offer_id)
             categories = ', '.join(categories)
-        await sendDM(member, f'Offer {offer_id} categories: {categories}')
+            await message.reply(f'Offer now has the following categories: {categories}')
 
 
-# Output needs better formatting
-@commands.command(name='ls_offers', help='Get offers for a seller\'s account | !ls_offers SELLER')
-@commands.has_role('member')
-async def ls_offers(ctx, seller):
-    member = ctx.guild.get_member(ctx.author.id)
-    seller_id = mentionToId(seller)
-    offers = None
-    try:
-        offers = cs.getOffers(seller_id)
-    except Exception as e:
-        await sendDM(member, str(e))
-        print(e)
-    else:
-        await sendDM(member, f'{offers}')
+    async def handle_approve(self, message):
+        args = shlex.split(message.content)
+        if len(args) < 2:
+            await message.reply(f'I think you forgot something -- you didn\'t give me enough arguments.')
+            return
+
+        user = message.author
+        tx_ids = args[1:]
+
+        total = len(tx_ids)
+        response = ''
+        for i in range(len(tx_ids)):
+            tx_id = tx_ids[i]
+
+            response += f'{i+1}/{total}:'
+
+            try:
+                cs.approveTransaction(user.id, tx_id)
+                balance = cs.getBalance(user.id)
+            except TransactionIDError as e:
+                response += f' Skipping transaction {tx_id}.'
+                response += ' A transaction with that ID doesn\'t exist.\n'
+            except MaxBalanceError as e:
+                response += f' Skipping transaction {tx_id}.'
+                response += ' You\'re balance is too high.\n'
+            except MinBalanceError as e:
+                response += f' Skipping transaction {tx_id}.'
+                response += ' Buyer\'s balance is too low.\n'
+            except UserPermissionError as e:
+                response += f' Skipping transaction {tx_id}.'
+                response += ' You are not the seller for this transaction.\n'
+            else:
+                response += f' Approved transaction {tx_id}.\n'
+                response += f'New balance: ${balance}\n'
+
+        # remove last line break
+        response = response[:-1]
+        await message.reply(response)
 
 
-@commands.command(name='ls_range', help='Get min/max balance range for your account | !ls_range')
-@commands.has_role('member')
-async def ls_range(ctx):
-    member = ctx.guild.get_member(ctx.author.id)
-    try:
-        min_balance, max_balance = cs.getAccountRange(ctx.author.id)
-    except Exception as e:
-        await sendDM(member, str(e))
-        print(e)
-    else:
-        await sendDM(member, f'The range for your account is ${min_balance} to ${max_balance}')
 
 
-@commands.command(name='mk_account', help='Create a new mutual credit account | !mk_account')
-@commands.has_role('member')
-async def mk_account(ctx):
-    member = ctx.guild.get_member(ctx.author.id)
-    try:
-        cs.createAccount(ctx.author.id)
-    except Exception as e:
-        await sendDM(member, str(e))
-        print(e)
-    else:
-        await sendDM(member, 'Mutual credit account created!')
 
 
-# Anything special needed for multiword arguments (space delimited but quoted)?
-@commands.command(name='mk_offer', help='Create a new offer to your account | !mk_offer DESC PRICE TITLE')
-@commands.has_role('member')
-async def mk_offer(ctx, description, price: int, title):
-    member = ctx.guild.get_member(ctx.author.id)
-    offerId = None
-    try:
-        offerId = cs.createOffer(ctx.author.id, description, price, title)
-    except Exception as e:
-        await sendDM(member, str(e))
-        print(e)
-    else:
-        await sendDM(member, f'Offer created with ID {offerId}')
+    async def handle_balance(self, message): # member-only command
+        balance = cs.getBalance(message.author.id)
+        await message.reply(f'Your balance is ${balance}')
 
 
-@commands.command(name='rm_cats', help='Remove categories from an existing offer | !rm_cats OFFER_ID CAT1 CAT2 CAT3...')
-@commands.has_role('member')
-async def rm_cats(ctx, offer_id, *args):
-    member = ctx.guild.get_member(ctx.author.id)
-    cnt = 0
-
-    for category in args:
-        try:
-            cs.removeCategoryFromOffer(offer_id, category)
-        except Exception as e:
-            await sendDM(member, str(e))
-            print(e)
-        else:
-            cnt += 1
-
-    await sendDM(member, f'{cnt}/{len(args)} categories removed from offer with ID {offer_id}')
+    async def handle_kill(self, message): # member-only command
+        quit()
 
 
-@commands.command(name='rm_offer', help='Remove an offer from your account | !rm_offer OFFER_ID')
-@commands.has_role('member')
-async def rm_offer(ctx, offer_id):
-    member = ctx.guild.get_member(ctx.author.id)
-    try:
-        seller_id = cs.getOfferSeller(offer_id)
-        if ctx.author.id != seller_id:
-            await sendDM(member, 'You can\'t delete an offer from another member\'s account!')
-        cs.deleteOffer(offer_id)
-    except Exception as e:
-        await ctx.send(str(e))
-        print(e)
-    else:
-        await sendDM(member, 'Offer has been removed!')
+    async def handle_hello(self, message):
+        await message.reply('Hi!', mention_author=True)
 
 
-BOT_COMMANDS = [
-    add_cats,
-    approve_tx,
-    balance,
-    mk_buy,
-    cancel_tx,
-    deny_tx,
-    kill_bot,
-    ls_cats,
-    ls_offers,
-    ls_range,
-    mk_account,
-    mk_offer,
-    rm_cats,
-    rm_offer
-]
+    async def on_ready(self):
+        print('MutualCreditClient ready')
+
+
+    async def on_message(self, message):
+        if message.content.startswith('!'):
+            try:
+                await self.handle_command(message)
+            except UserPermissionError as e:
+                await message.reply('You don\'t have permission to do that')
+            except Exception as e:
+                print(str(e))
+
+
 
 
 if __name__ == '__main__':
-    for cmd in BOT_COMMANDS:
-        bot.add_command(cmd)
-
-    bot.run(TOKEN)
+    load_dotenv()
+    TOKEN = os.getenv('DISCORD_TOKEN')
+    intents = discord.Intents.default()
+    intents.members = True
+    client = MutualCreditClient(command_prefix='!', intents=intents)
+    try:
+        client.run(TOKEN)
+    except Exception as e:
+        print(str(e))

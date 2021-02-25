@@ -1,3 +1,6 @@
+# ignoreme folder
+/ignoreme
+
 # Database files
 *.db
 

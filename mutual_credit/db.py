@@ -1,5 +1,6 @@
 import sqlite3
 from sqlite3 import Error
+import time
 
 
 DB_FILE = 'credit_system.db'
@@ -77,10 +78,8 @@ def create_offer(conn, offer):
 
 
 def create_offer_category(conn, offer_category):
-    print(f'db.create_offer_category(): offer_category={offer_category}')
     sql = '''INSERT INTO offer_categories(offer_id, category)
              VALUES(?, ?)'''
-    print(conn)
     conn.execute(sql, offer_category)
 
 
@@ -88,7 +87,7 @@ def create_transaction(conn, tx):
     sql = '''INSERT INTO transactions(id, buyer_id, seller_id, offer_id, status,
                 start_timestamp, end_timestamp)
              VALUES(?, ?, ?, ?, ?, ?, ?)'''
-    conn.execute(sql, tx)
+    conn.execute(sql, (*tx, int(time.time()), None))
 
 
 def delete_account(cursor, account_id):
@@ -215,7 +214,13 @@ def update_account_balance(conn, account_id, balance):
 
 # used for cancel, deny, and approve (checks)
 def update_transaction_status(cursor, tx_id, status):
-    sql = '''UPDATE transactions
-             SET status=?
-             WHERE id=?'''
-    cursor.execute(sql, (status, tx_id))
+    if status == 'APPROVED':
+        sql = '''UPDATE transactions
+                 SET status=?, end_timestamp=?
+                 WHERE id=?'''
+        cursor.execute(sql, (status, int(time.time()), tx_id))
+    else:
+        sql = '''UPDATE transactions
+                 SET status=?
+                 WHERE id=?'''
+        cursor.execute(sql, (status, tx_id))

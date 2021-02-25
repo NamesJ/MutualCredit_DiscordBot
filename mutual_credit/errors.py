@@ -1,49 +1,56 @@
-class AccountAlreadyExistsError(Exception):
-
-    def __init__(self, accountId):
-        self.message = f'Account "{accountId}" already exists.'
-
-
-class AccountBalanceNotInRangeError(Exception):
+class AccountIDError(Exception):
 
     def __init__(self, message):
         self.message = message
         super().__init__(self.message)
 
 
-class AccountBalanceBelowMinError(AccountBalanceNotInRangeError):
+class MinBalanceError(Exception):
 
-    def __init__(self, accountId, txId, minBalance):
-        self.message = f'Transaction "{txId}" would put buyer account "{accountId}" balance below minimum of {minBalance}'
-
-
-class AccountBalanceAboveMaxError(AccountBalanceNotInRangeError):
-
-    def __init__(self, accountId, txId, maxBalance):
-        self.message = f'Transaction "{txId}" would put seller account "{accountId}" balance above maximum of {maxBalance}'
-
-
-class BuyerIsSellerError(Exception):
-
-    def __init__(self, accountId):
-        self.message = f'Account cannot transact with itself. Account: "{accountId}".'
-
-
-class InvalidAccountIdError(Exception):
-
-    def __init__(self, accountId):
-        self.message = f'Account with ID "{accountId}" does not exist'
+    def __init__(self, account_id, tx_id, min_balance):
+        self.message = f'Transaction "{tx_id}" would put buyer account \
+                            "{account_id}" balance below minimum of {min_balance}'
         super().__init__(self.message)
 
 
-class InvalidOfferIdError(Exception):
+class MaxBalanceError(Exception):
 
-    def __init__(self, accountId, offerId):
-        self.message = f'Account "{accountId}" does not have an offer with ID "{offerId}"'
+    def __init__(self, account_id, tx_id, max_balance):
+        self.message = f'Transaction "{tx_id}" would put seller account \
+                            "{account_id}" balance above maximum of {max_balance}'
         super().__init__(self.message)
 
 
-class InvalidTransactionIdError(Exception):
+class SelfTransactionError(Exception):
 
-    def __init__(self, txId):
-        self.message = f'Transaction with ID "{txId}" does not exist.'
+    def __init__(self, account_id):
+        self.message = f'Account {account_id} tried to transact with itself.'
+        super().__init__(self.message)
+
+
+class OfferIDError(Exception):
+
+    def __init__(self, account_id, offer_id):
+        self.message = f'Account "{account_id}" does not have an offer with ID "{offer_id}"'
+        super().__init__(self.message)
+
+
+class TransactionIDError(Exception):
+
+    def __init__(self, tx_id):
+        self.message = f'Transaction with ID "{tx_id}" does not exist.'
+        super().__init__(self.message)
+
+
+class TransactionStatusError(Exception):
+
+    def __init__(self, message):
+        self.message = message
+        super().__init__(self.message)
+
+
+class UserPermissionError (Exception):
+
+    def __init__(self, message):
+        self.message = message
+        super().__init__(self.message)
