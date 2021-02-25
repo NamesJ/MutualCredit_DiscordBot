@@ -199,21 +199,27 @@ def getOfferCategories(offer_id):
 def getBalance(account_id):
     with db.connect() as conn:
         balance = db.get_account_balance(conn, account_id)
+
+    if balance is None:
+        raise AccountIDError(f'No account with ID {account_id} exists.')
+
     return balance
 
 
 # available balance = balance - sum(pending buy requests)
 def getAvailableBalance(account_id):
     with db.connect() as conn:
-        available_balance = db.get_account_balance(conn, account_id)
+        balance = db.get_account_balance(conn, account_id)
         pending_buys = db.get_pending_tx_for_buyer(conn, account_id)
 
-        for tx in pending_buys:
-            offer_id = tx[3]
-            price = db.get_offer_price(conn, offer_id)
-            available_balance -= price
+        total_pending = 0
+        for offer_id in [tx[3] for tx in pending_buys]:
+            total_pending += db.get_offer_price(conn, offer_id)
 
-    return available_balance
+    if balance is None:
+        AccountIDError(f'No account with ID {account_id} exists.')
+
+    return balance - total_pending
 
 
 def getOffers(seller_id):
