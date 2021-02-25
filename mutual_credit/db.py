@@ -2,6 +2,9 @@ import sqlite3
 from sqlite3 import Error
 
 
+DB_FILE = 'credit_system.db'
+
+
 def _create_table(conn, sql):
     if conn is not None:
         try:
@@ -11,6 +14,10 @@ def _create_table(conn, sql):
             print(e)
     else:
         raise Exception('Failed to create database cursorection')
+
+
+def connect():
+    return sqlite3.connect(DB_FILE)
 
 
 def init_accounts_table(conn):
