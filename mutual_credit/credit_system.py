@@ -152,8 +152,10 @@ def createTransaction(buyer_id, offer_id):
 
         if buyer_id == seller_id:
             raise SelfTransactionError('Buyer ID must be different from seller ID')
+
         if buyer_balance - price < buyer_min:
             raise MinBalanceError('Buyer balance too low for transaction')
+
         # TODO: seller_id in tx is technically unnecessary
         tx = (str(uuid.uuid4()), buyer_id, seller_id, offer_id, "PENDING")
         db.create_transaction(conn, tx)
@@ -219,6 +221,11 @@ def getBalance(account_id):
 # available balance = balance - sum(pending buy requests)
 def getAvailableBalance(account_id):
     with db.connect() as conn:
+        try:
+            min_balance, max_balance = db.get_account_range(conn, account_id)
+        except TypeError as e:
+            raise AccountIDError(f'No account with ID {account_id} exists.')
+
         balance = db.get_account_balance(conn, account_id)
         pending_buys = db.get_pending_tx_for_buyer(conn, account_id)
 
@@ -226,10 +233,9 @@ def getAvailableBalance(account_id):
         for offer_id in [tx[3] for tx in pending_buys]:
             total_pending += db.get_offer_price(conn, offer_id)
 
-    if balance is None:
-        AccountIDError(f'No account with ID {account_id} exists.')
+    available = balance - total_pending - min_balance
 
-    return balance - total_pending
+    return available
 
 
 def getOffers(seller_id):
