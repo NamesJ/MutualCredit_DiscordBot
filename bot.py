@@ -19,9 +19,14 @@ class MutualCreditClient (discord.Client):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.commands = []
+
+        for name in vars(self):
+            if name.startswith('handle_'):
+                self.commands.append(name[7:])
 
 
-    async def handle_command(self, message):
+    async def run_command(self, message):
 
         args = shlex.split(message.content)
         cmd = args[0][1:]
@@ -162,6 +167,15 @@ class MutualCreditClient (discord.Client):
         await message.reply('This command is not yet implemented.')
 
 
+    async def handle_help(self, message):
+        response = 'Commands:'
+
+        for cmd in self.commands:
+            response += f'\n{cmd}'
+
+        await message.reply(response)
+
+
     async def handle_kill(self, message): # member-only command
         quit()
 
@@ -189,7 +203,7 @@ class MutualCreditClient (discord.Client):
     async def on_message(self, message):
         if message.content.startswith('!'):
             try:
-                await self.handle_command(message)
+                await self.run_command(message)
             except UserPermissionError as e:
                 await message.reply('You don\'t have permission to do that')
             except Exception as e:
