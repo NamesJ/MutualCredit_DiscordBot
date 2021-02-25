@@ -1,5 +1,10 @@
 from . import db
 from .errors import (
+    MaxBalanceError,
+    MinBalanceError,
+    SelfTransactionError,
+    TransactionIDError,
+    TransactionStatusError,
     UserPermissionError
 )
 
@@ -120,16 +125,16 @@ def createOffer(account_id, description, price, title):
 # Should use a "pending balance" rather than actual balance of buyer
 def createTransaction(buyer_id, offer_id):
     with db.connect() as conn:
-        buyer_balance = getAvailableBalance(conn, buyer_id)
+        buyer_balance = getAvailableBalance(buyer_id)
         buyer_min, buyer_max = db.get_account_range(conn, buyer_id)
         price = db.get_offer_price(conn, offer_id)
         seller_id = db.get_offer_seller(conn, offer_id)
         # TODO: check that offer exists
 
         if buyer_id == seller_id:
-            raise Exception('Buyer ID must be different from seller ID')
+            raise SelfTransactionError('Buyer ID must be different from seller ID')
         if buyer_balance - price < buyer_min:
-            raise Exception('Buyer balance too low for transaction')
+            raise MinBalanceError('Buyer balance too low for transaction')
         # TODO: seller_id in tx is technically unnecessary
         tx = (str(uuid.uuid4()), buyer_id, seller_id, offer_id, "PENDING")
         db.create_transaction(conn, tx)
@@ -186,7 +191,7 @@ def getAvailableBalance(account_id):
 
         for tx in pending_buys:
             offer_id = tx[3]
-            price = db.get_offer_price(offer_id)
+            price = db.get_offer_price(conn, offer_id)
             available_balance -= price
 
     return available_balance

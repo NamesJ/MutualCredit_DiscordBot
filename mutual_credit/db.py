@@ -160,7 +160,7 @@ def get_offer_seller(cursor, offer_id):
 def get_pending_tx_for_buyer(cursor, account_id):
     sql = '''SELECT *
              FROM transactions
-             WHERE buyer_id=? AND status=PENDING'''
+             WHERE buyer_id=? AND status="PENDING"'''
     rows = cursor.execute(sql, (account_id,)).fetchall()
     return rows
 
@@ -168,7 +168,7 @@ def get_pending_tx_for_buyer(cursor, account_id):
 def get_pending_tx_for_seller(cursor, account_id):
     sql = '''SELECT *
              FROM transactions
-             WHERE seller_id=? AND status=PENDING'''
+             WHERE seller_id=? AND status="PENDING"'''
     rows = cursor.execute(sql, (account_id,)).fetchall()
     return rows
 

@@ -2,6 +2,7 @@ from mutual_credit import credit_system as cs
 from mutual_credit.errors import (
     MaxBalanceError,
     MinBalanceError,
+    SelfTransactionError,
     TransactionIDError,
     TransactionStatusError,
     UserPermissionError
@@ -118,22 +119,19 @@ class MutualCreditClient (discord.Client):
 
             try:
                 cs.createTransaction(user.id, offer_id)
-                balance = cs.getBalance(user.id)
+                available_balance = cs.getAvailableBalance(user.id)
             except TransactionIDError as e:
-                response += f' Skipping transaction {offer_id}.'
-                response += ' A transaction with that ID doesn\'t exist.\n'
-            except MaxBalanceError as e:
-                response += f' Skipping transaction {offer_id}.'
-                response += ' You\'re balance is too high.\n'
+                response += f' Skipping offer {offer_id}.'
+                response += ' An offer with that ID doesn\'t exist.\n'
             except MinBalanceError as e:
-                response += f' Skipping transaction {offer_id}.'
-                response += ' Buyer\'s balance is too low.\n'
-            except UserPermissionError as e:
-                response += f' Skipping transaction {offer_id}.'
-                response += ' You are not the seller for this transaction.\n'
+                response += f' Skipping offer {offer_id}.'
+                response += ' You\'re balance is too low.\n'
+            except SelfTransactionError as e:
+                response += f' Skipping offer {offer_id}.'
+                response += ' You can\'t buy your own offer.'
             else:
-                response += f' Approved transaction {offer_id}.\n'
-                response += f'New balance: ${balance}\n'
+                response += f' Sent buy request for {offer_id}.\n'
+                response += f'New available balance: ${available_balance}\n'
 
 
     async def handle_kill(self, message): # member-only command
