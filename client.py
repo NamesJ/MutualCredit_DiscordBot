@@ -107,10 +107,6 @@ class MutualCreditClient (discord.Client):
         await message.reply(response)
 
 
-    async def handle_available_balance(self, message):
-        await message.reply('This command is not yet implemented.')
-
-
     async def handle_balance(self, message): # member-only command
         balance = cs.getBalance(message.author.id)
         await message.reply(f'Your balance is ${balance}')
