@@ -62,12 +62,13 @@ class MutualCreditClient (discord.Client):
         user = message.author
         tx_ids = args[1:]
 
-        total = len(tx_ids)
+        total_txs = len(tx_ids)
         response = ''
-        for i in range(len(tx_ids)):
+        for i in range(total_txs):
             tx_id = tx_ids[i]
 
-            response += f'{i+1}/{total}:'
+            if total_txs > 1:
+                response += f'{i+1}/{total}:'
 
             try:
                 cs.approveTransaction(user.id, tx_id)
@@ -93,13 +94,13 @@ class MutualCreditClient (discord.Client):
         await message.reply(response)
 
 
-
-
-
-
     async def handle_balance(self, message): # member-only command
         balance = cs.getBalance(message.author.id)
         await message.reply(f'Your balance is ${balance}')
+
+
+    async def handle_buy(self, message):
+
 
 
     async def handle_kill(self, message): # member-only command
