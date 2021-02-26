@@ -312,7 +312,7 @@ def getPendingSales(accountId):
 
 def isMember(account_id):
     with db.connect() as conn:
-         db.get_account_balance(conn, account_id)
+         balance = db.get_account_balance(conn, account_id)
 
     try:
         if balance is None:
