@@ -138,6 +138,7 @@ def get_offers_by_seller(cursor, seller_id):
              FROM offers
              WHERE seller_id=?'''
     rows = cursor.execute(sql, (seller_id,)).fetchall()
+    if len(rows) == 0: return None
     return rows
 
 

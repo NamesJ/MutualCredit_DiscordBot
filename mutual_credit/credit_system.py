@@ -248,6 +248,9 @@ def getOffers(seller_id):
     with db.connect() as conn:
         offers = db.get_offers_by_seller(conn, seller_id)
 
+    if offers is None:
+        OfferIDError(f'No offer with ID {offer_id} exists.')
+
     return offers
 
 

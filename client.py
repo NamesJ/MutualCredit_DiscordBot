@@ -328,12 +328,14 @@ class MutualCreditClient (discord.Client):
         try:
             offers = cs.getOffers(seller_id)
         except AccountIDError as e:
-            await message.reply(f'There is no seller with that ID.')
+            await message.reply(f'No seller with ID {seller_id} exists.')
+        except OfferIDError as e:
+            await message.reply(f'No offer with ID {offer_id} exists.')
         else:
             response = '\n'
 
             for offer in offers:
-                offer_id, seller_id, description, price, title = offer
+                offer_id, description, price, title = offer[0]+offer[2:]
                 response += f'{title} | ${price}\n{description}\n{offer_id}\n\n'
 
             response = response[:-2]
