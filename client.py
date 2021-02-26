@@ -54,7 +54,7 @@ class MutualCreditClient (discord.Client):
             await func(message)
 
 
-    async def handle_add_cats(self, message):
+    async def handle_add_categories(self, message):
         args = shlex.split(message.content)
         if len(args) < 3:
             await message.reply(f'I think you forgot something -- you didn\'t give me enough arguments.')
@@ -286,7 +286,7 @@ class MutualCreditClient (discord.Client):
                 cmds.append('!' + name[7:])
 
         # build response message
-        response = 'Commands:'
+        response = 'Commands:\n'
         response += '\n'.join(sorted(cmds))
 
         await message.reply(response)
