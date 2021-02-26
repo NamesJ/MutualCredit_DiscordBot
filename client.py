@@ -332,14 +332,14 @@ class MutualCreditClient (discord.Client):
         except OfferIDError as e:
             await message.reply(f'No offer with ID {offer_id} exists.')
         else:
-            response = '\n'
+            response = f'{mention}\'s Offers:\n'
 
+            offer_strfmt = '{4} | ${3}\n{2}\n{0}\n\n'
             for offer in offers:
-                offer_id, description, price, title = offer[0]+offer[2:]
-                response += f'{title} | ${price}\n{description}\n{offer_id}\n\n'
+                response += offer_strfmt.format(*offer)
 
+            #strip last two line breaks
             response = response[:-2]
-
             await message.reply(response)
 
 
