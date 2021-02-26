@@ -189,7 +189,7 @@ def getAccountRange(account_id):
         result = db.get_account_range(conn, account_id)
 
     if result is None:
-        raise AccountIDError(f'Account with ID {account_id} does not exist.')
+        raise AccountIDError(f'getAccountRange(): Account with ID {account_id} does not exist.')
 
     return result
 
@@ -208,7 +208,7 @@ def getOfferCategories(offer_id):
     return result
 
 
-def getBalance(account_id):
+def getAccountBalance(account_id):
     with db.connect() as conn:
         balance = db.get_account_balance(conn, account_id)
 
@@ -218,24 +218,14 @@ def getBalance(account_id):
     return balance
 
 
-# available balance = balance - sum(pending buy requests)
+# available balance is the the amount of credit left to use
+# available_balance = account_balance - sum(pending_debits) - min_balance
 def getAvailableBalance(account_id):
-    with db.connect() as conn:
-        try:
-            min_balance, max_balance = db.get_account_range(conn, account_id)
-        except TypeError as e:
-            raise AccountIDError(f'No account with ID {account_id} exists.')
+    min_balance, max_balance = getAccountRange(account_id)
+    balance = getAccountBalance(account_id)
+    pending_debits = getTotalPendingDebits(account_id)
 
-        balance = db.get_account_balance(conn, account_id)
-        pending_buys = db.get_pending_tx_for_buyer(conn, account_id)
-
-        total_pending = 0
-        for offer_id in [tx[3] for tx in pending_buys]:
-            total_pending += db.get_offer_price(conn, offer_id)
-
-    available = balance - total_pending - min_balance
-
-    return available
+    return balance - pending_debits - min_balance
 
 
 def getOffers(seller_id):
@@ -252,6 +242,22 @@ def getOfferSeller(offer_id):
     with db.connect() as conn:
         seller_id = db.get_offer_seller(conn, offer_id)
     return seller_id
+
+
+# returns sum of price of pending sales
+def getTotalPendingCredits(account_id):
+    with db.connect() as conn:
+        credits = db.get_total_pending_credits_by_account(conn, account_id)
+
+    return credits
+
+
+# returns sum of price of pending buys
+def getTotalPendingDebits(account_id):
+    with db.connect() as conn:
+        debits = db.get_total_pending_debits_by_account(conn, account_id)
+
+    return debits
 
 
 def getTransaction(tx_id):

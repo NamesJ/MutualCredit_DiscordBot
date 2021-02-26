@@ -113,9 +113,15 @@ class MutualCreditClient (discord.Client):
 
     async def handle_balance(self, message): # member-only command
         user = message.author
-        balance = cs.getBalance(user.id)
-        available = cs.getAvailableBalance(user.id)
-        await message.reply(f'\nBalance: ${balance}\nAvailable: ${available}')
+        account_balance = cs.getAccountBalance(user.id)
+        available_balance = cs.getAvailableBalance(user.id)
+        pending_credits = cs.getTotalPendingCredits(user.id)
+
+        response = f'Account:'
+        response += f'\nAccount balance: ${account_balance}'
+        response += f'\nAvailable balance: ${available_balance}'
+        response += f'\nPending credits: ${pending_credits}'
+        await message.reply(response)
 
 
     async def handle_buy(self, message):

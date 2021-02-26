@@ -108,25 +108,22 @@ def delete_offer_category(conn, offer_id, category):
     conn.execute(sql, (offer_id, category))
 
 
-def get_account_balance(cursor, account_id):
+def get_account_balance(conn, account_id):
     sql = '''SELECT balance
              FROM accounts
              WHERE id=?'''
-    rows = cursor.execute(sql, (account_id,)).fetchall()
-    if len(rows) == 0:
-        return
-    return rows[0][0]
+    row = conn.execute(sql, (account_id,)).fetchone()
+    if row: return row[0]
+    return None
 
 
 # get min,max balance range for account
-def get_account_range(cursor, account_id):
+def get_account_range(conn, account_id):
     sql = '''SELECT min_balance, max_balance
              FROM accounts
              WHERE id=?'''
-    rows = cursor.execute(sql, (account_id,)).fetchall()
-    if len(rows) == 0:
-        return None
-    return rows[0]
+    row = conn.execute(sql, (account_id,)).fetchone()
+    return row
 
 
 def get_offers_by_seller(cursor, seller_id):
@@ -175,6 +172,32 @@ def get_pending_tx_for_seller(cursor, account_id):
              WHERE seller_id=? AND status="PENDING"'''
     rows = cursor.execute(sql, (account_id,)).fetchall()
     return rows
+
+
+def get_total_pending_credits_by_account(conn, account_id):
+    sql = '''SELECT sum(o.price)
+                    FROM offers as o
+                    LEFT JOIN transactions as t
+                    ON (o.id == t.offer_id)
+                    WHERE t.seller_id=? AND t.status="PENDING"
+                    GROUP BY t.seller_id'''
+    row = conn.execute(sql, (account_id,)).fetchone()
+    if row == None:
+        return 0
+    return row[0]
+
+
+def get_total_pending_debits_by_account(conn, account_id):
+    sql = '''SELECT sum(o.price)
+                    FROM offers as o
+                    LEFT JOIN transactions as t
+                    ON (o.id == t.offer_id)
+                    WHERE t.buyer_id=? AND t.status="PENDING"
+                    GROUP BY t.buyer_id'''
+    row = conn.execute(sql, (account_id,)).fetchone()
+    if row == None:
+        return 0
+    return row[0]
 
 
 def get_transaction(cursor, tx_id):
