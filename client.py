@@ -14,6 +14,9 @@ import discord
 from dotenv import load_dotenv
 import os
 import shlex
+import logging
+
+logging.basicConfig(level=logging.INFO)
 
 
 
