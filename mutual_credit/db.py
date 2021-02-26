@@ -168,6 +168,15 @@ def get_offer_seller(conn, offer_id):
     return row
 
 
+def get_offer_title(conn, offer_id):
+    sql = '''SELECT title
+             FROM offers
+             where id=?'''
+    row = conn.execute(sql, (offer_id, )).fetchone()
+    if row: return row[0]
+    return row
+
+
 def get_pending_tx_for_buyer(cursor, account_id):
     sql = '''SELECT *
              FROM transactions
@@ -215,7 +224,6 @@ def get_transaction(conn, tx_id):
              FROM transactions
              WHERE id=?'''
     row = conn.execute(sql, (tx_id,)).fetchone()
-    if row: row[0]
     return row
 
 
@@ -224,7 +232,7 @@ def get_transaction_buyer(conn, tx_id):
              FROM transactions
              WHERE id=?'''
     row = conn.execute(sql, (tx_id,)).fetchone()
-    if row: rows[0]
+    if row: return row[0]
     return row
 
 
@@ -233,7 +241,7 @@ def get_transaction_seller(conn, tx_id):
              FROM transactions
              WHERE id=?'''
     row = conn.execute(sql, (tx_id,)).fetchone()
-    if row: rows[0]
+    if row: return row[0]
     return row
 
 

@@ -275,6 +275,16 @@ def getOfferSeller(offer_id):
     return seller_id
 
 
+def getOfferTitle(offer_id):
+    with db.connect() as conn:
+        title = db.get_offer_title(conn, offer_id)
+
+    if title is None:
+        raise OfferIDError(f'No offer with ID {offer_id} exists.')
+
+    return title
+
+
 # returns sum of price of pending sales
 def getTotalPendingCredits(account_id):
     with db.connect() as conn:

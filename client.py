@@ -11,6 +11,7 @@ from mutual_credit.errors import (
 )
 
 import discord
+from discord.utils import get
 from dotenv import load_dotenv
 import os
 import shlex
@@ -95,6 +96,7 @@ class MutualCreditClient (discord.Client):
             try:
                 cs.approveTransaction(user.id, tx_id)
                 balance = cs.getAccountBalance(user.id)
+                buyer_id = cs.getTransactionBuyer(tx_id)
             except TransactionIDError as e:
                 response += f' Skipping transaction {tx_id}.'
                 response += ' A transaction with that ID doesn\'t exist.\n'
@@ -111,6 +113,13 @@ class MutualCreditClient (discord.Client):
                 response += f' Approved transaction {tx_id}.\n'
                 response += f'New balance: ${balance}\n'
 
+                buyer = get(client.get_all_members(), id=buyer_id)
+                if buyer:
+                    await buyer.create_dm()
+                    content = f'{user.name} approved your buy request with'
+                    content += f' ID {tx_id}'
+                    await buyer.dm_channel.send(content)
+
         # remove last line break
         response = response[:-1]
         await message.reply(response)
@@ -122,7 +131,7 @@ class MutualCreditClient (discord.Client):
         available_balance = cs.getAvailableBalance(user.id)
         pending_credits = cs.getTotalPendingCredits(user.id)
 
-        response = f'Account:'
+        response = ''
         response += f'\nAccount balance: ${account_balance}'
         response += f'\nAvailable balance: ${available_balance}'
         response += f'\nPending credits: ${pending_credits}'
@@ -149,6 +158,8 @@ class MutualCreditClient (discord.Client):
             try:
                 tx_id = cs.createTransaction(user.id, offer_id)
                 available_balance = cs.getAvailableBalance(user.id)
+                seller_id = cs.getOfferSeller(offer_id)
+                offer_title = cs.getOfferTitle(offer_id)
             except TransactionIDError as e:
                 response += f' Skipping offer {offer_id}.'
                 response += ' An offer with that ID doesn\'t exist.\n'
@@ -161,6 +172,16 @@ class MutualCreditClient (discord.Client):
             else:
                 response += f' Created buy request with ID {tx_id}.\n'
                 response += f'New available balance: ${available_balance}\n'
+                # notify seller
+                seller = get(client.get_all_members(), id=seller_id)
+                if seller:
+                    await seller.create_dm()
+                    content = f'New buy request with ID {tx_id}'
+                    content += f' from {user.name} for {offer_title}.'
+                    await seller.dm_channel.send(content)
+
+                else:
+                    print('Seller not found, which is weird.')
 
         # remove last line break
         response = response[:-1]
@@ -370,7 +391,7 @@ class MutualCreditClient (discord.Client):
         except OfferIDError as e:
             await message.reply(f'No offer with ID {offer_id} exists.')
         else:
-            response = f'{mention}\'s Offers:\n'
+            response = f'{mention}\'s Offers:\n\n'
 
             offer_strfmt = '{title} | ${price}\n{desc}\nCategories: {cats}\nID: {off_id}\n\n'
             print(f'offers: {offers}')
