@@ -150,12 +150,13 @@ def get_offer_price(cursor, offer_id):
     return rows[0][0]
 
 
-def get_offer_seller(cursor, offer_id):
+def get_offer_seller(conn, offer_id):
     sql = '''SELECT seller_id
              FROM offers
              WHERE id=?'''
-    rows = cursor.execute(sql, (offer_id,)).fetchall()
-    return rows[0][0]
+    row = conn.execute(sql, (offer_id,)).fetchone()
+    if row: return row[0]
+    return row
 
 
 def get_pending_tx_for_buyer(cursor, account_id):
