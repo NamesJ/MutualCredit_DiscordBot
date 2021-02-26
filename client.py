@@ -317,12 +317,16 @@ class MutualCreditClient (discord.Client):
 
 
     async def handle_list_offers(self, message):
-        args = shlex.split(message.content)
-        if len(args) != 2:
-            await message.reply(f'That\'s not the right number of arguments.')
-
         user = message.author
-        mention = args[1]
+
+        args = shlex.split(message.content)
+        if len(args) < 2:
+            mention = f'<@!{user.id}>'
+        elif len(args) == 2:
+            mention = args[1]
+        elif len(args) > 2:
+            await message.reply(f'That\'s to many arguments.')
+
         seller_id = mentionToId(mention)
 
         try:
