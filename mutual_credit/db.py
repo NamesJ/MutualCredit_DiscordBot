@@ -72,6 +72,7 @@ def create_account(conn, account):
 
 
 def create_offer(conn, offer):
+    offer = (uuid.uuid4().hex, *offer)
     sql = '''INSERT INTO offers(id, seller_id, description, price, title)
              VALUES(?, ?, ?, ?, ?)'''
     conn.execute(sql, offer)

@@ -135,10 +135,8 @@ def createAccount(account_id):
 
 
 def createOffer(account_id, description, price, title):
-    offer = (str(uuid.uuid4()), account_id, description, price, title)
     with db.connect() as conn:
         db.create_offer(conn, offer)
-    return offer[0]
 
 
 # Should use a "pending balance" rather than actual balance of buyer
