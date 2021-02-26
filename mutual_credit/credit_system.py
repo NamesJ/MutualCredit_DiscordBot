@@ -173,7 +173,7 @@ def deleteAccount(account_id):
 # delete could be dangerous, instead maybe have an 'enabled' flag
 def deleteOffer(account_id, offer_id):
     with db.connect() as conn:
-        seller_id = db.get_offer_seller(offer_id)
+        seller_id = db.get_offer_seller(conn, offer_id)
 
     if seller_id is None:
         raise OfferIDError(f'Offer with ID {offer_id} does not exist.')
@@ -182,8 +182,7 @@ def deleteOffer(account_id, offer_id):
         raise UserPermissionError('User tried to delete another user\'s offer')
 
     with db.connect() as conn:
-        with conn.cursor() as cur:
-            db.delete_offer(conn, offer_id)
+        db.delete_offer(conn, offer_id)
 
 
 def denyTransaction(tx_id):

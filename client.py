@@ -251,11 +251,7 @@ class MutualCreditClient (discord.Client):
                 response += f'{i+1}/{len(offer_ids)}:'
 
             try:
-                cs.approveTransaction(user.id, offer_id)
-                balance = cs.getAccountBalance(user.id)
-            except AccountIDError as e:
-                response = f'You must be a member to do that.'
-                break
+                cs.deleteOffer(user.id, offer_id)
             except TransactionIDError as e:
                 response += f' Skipping offer {offer_id}.'
                 response += ' A transaction with that ID doesn\'t exist.\n'
@@ -269,10 +265,7 @@ class MutualCreditClient (discord.Client):
                 response += f' Skipping offer {offer_id}.'
                 response += ' You are not the seller for this transaction.\n'
             else:
-                response += f' Approved offer {offer_id}.\n'
-
-
-        response += f'New balance: ${balance}\n'
+                response += f' Deleted offer {offer_id}.\n'
 
         # remove last line break
         response = response[:-1]
