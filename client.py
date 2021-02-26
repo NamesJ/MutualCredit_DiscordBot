@@ -76,7 +76,7 @@ class MutualCreditClient (discord.Client):
     async def handle_approve(self, message):
         args = shlex.split(message.content)
         if len(args) < 2:
-            await message.reply(f'I think you forgot something -- you didn\'t give me enough arguments.')
+            await message.reply(f'You must provide at least one trannsaction ID.')
             return
 
         user = message.author
