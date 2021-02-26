@@ -308,8 +308,16 @@ def getPendingSales(accountId):
 
 
 def isMember(account_id):
-    # TODO
-    return True
+    with db.connect() as conn:
+         db.get_account_balance(conn, account_id)
+
+    try:
+        if balance is None:
+            raise AccountIDError(f'No account with ID {account_id} exists.')
+    except AccountIDError as e:
+        return False
+    else:
+        return True
 
 
 def removeCategoryFromOffer(member_id, offer_id, category):
