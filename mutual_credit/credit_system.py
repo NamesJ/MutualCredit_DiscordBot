@@ -158,9 +158,10 @@ def createTransaction(buyer_id, offer_id):
             raise MinBalanceError('Buyer balance too low for transaction')
 
         # TODO: seller_id in tx is technically unnecessary
-        tx = (str(uuid.uuid4()), buyer_id, seller_id, offer_id, "PENDING")
-        db.create_transaction(conn, tx)
-    return tx[0]
+        tx = (buyer_id, seller_id, offer_id)
+        tx_id = db.create_transaction(conn, tx)
+
+    return tx_id
 
 
 # delete could be dangerous, instead maybe have an 'enabled' flag

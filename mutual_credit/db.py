@@ -88,10 +88,13 @@ def create_offer_category(conn, offer_category):
 
 
 def create_transaction(conn, tx):
+    tx = (uuid.uuid4().hex, *tx, "PENDING", int(time.time()), None)
     sql = '''INSERT INTO transactions(id, buyer_id, seller_id, offer_id, status,
                 start_timestamp, end_timestamp)
              VALUES(?, ?, ?, ?, ?, ?, ?)'''
-    conn.execute(sql, (*tx, int(time.time()), None))
+    conn.execute(sql, (uuid.uuid4().hex, *tx, int(time.time()), None))
+
+    return tx[0]
 
 
 def delete_account(cursor, account_id):
