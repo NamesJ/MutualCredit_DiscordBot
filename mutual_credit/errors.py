@@ -28,7 +28,7 @@ class SelfTransactionError(Exception):
 
 class OfferIDError(Exception):
 
-    def __init__(self, account_id, offer_id):
+    def __init__(self, message):
         self.message = message
         super().__init__(self.message)
 
