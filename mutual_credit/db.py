@@ -208,36 +208,40 @@ def get_total_pending_debits_by_account(conn, account_id):
     return row[0]
 
 
-def get_transaction(cursor, tx_id):
+def get_transaction(conn, tx_id):
     sql = '''SELECT *
              FROM transactions
              WHERE id=?'''
-    rows = cursor.execute(sql, (tx_id,)).fetchall()
-    return rows[0]
+    row = conn.execute(sql, (tx_id,)).fetchone()
+    if row: rows[0]
+    return row
 
 
 def get_transaction_buyer(conn, tx_id):
     sql = '''SELECT buyer_id
              FROM transactions
              WHERE id=?'''
-    rows = conn.execute(sql, (tx_id,)).fetchall()
-    return rows[0][0]
+    row = conn.execute(sql, (tx_id,)).fetchone()
+    if row: rows[0]
+    return row
 
 
 def get_transaction_seller(conn, tx_id):
     sql = '''SELECT seller_id
              FROM transactions
              WHERE id=?'''
-    rows = conn.execute(sql, (tx_id,)).fetchall()
-    return rows[0][0]
+    row = conn.execute(sql, (tx_id,)).fetchone()
+    if row: rows[0]
+    return row
 
 
 def get_transaction_status(cursor, tx_id):
     sql = '''SELECT status
              FROM transactions
              WHERE id=?'''
-    rows = cursor.execute(sql, (tx_id,)).fetchall()
-    return rows[0][0]
+    row = cursor.execute(sql, (tx_id,)).fetchone()
+    if row: rows[0]
+    return row
 
 
 def update_account_balance(conn, account_id, balance):
