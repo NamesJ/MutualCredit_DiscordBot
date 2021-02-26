@@ -55,7 +55,6 @@ def init_transactions_table(conn):
     _create_table(conn, ''' CREATE TABLE IF NOT EXISTS transactions (
                                 id text PRIMARY KEY,
                                 buyer_id int NOT NULL,
-                                seller_id int NOT NULL,
                                 offer_id text NOT NULL,
                                 status text NOT NULL,
                                 start_timestamp int NOT NULL,
@@ -89,9 +88,9 @@ def create_offer_category(conn, offer_category):
 
 def create_transaction(conn, tx):
     tx = (uuid.uuid4().hex, *tx, "PENDING", int(time.time()), None)
-    sql = '''INSERT INTO transactions(id, buyer_id, seller_id, offer_id, status,
+    sql = '''INSERT INTO transactions(id, buyer_id, offer_id, status,
                 start_timestamp, end_timestamp)
-             VALUES(?, ?, ?, ?, ?, ?, ?)'''
+             VALUES(?, ?, ?, ?, ?, ?)'''
     conn.execute(sql, tx)
 
     return tx[0]
@@ -185,11 +184,13 @@ def get_pending_tx_for_buyer(cursor, account_id):
     return rows
 
 
-def get_pending_tx_for_seller(cursor, account_id):
+def get_pending_tx_for_seller(conn, account_id):
     sql = '''SELECT *
-             FROM transactions
-             WHERE seller_id=? AND status="PENDING"'''
-    rows = cursor.execute(sql, (account_id,)).fetchall()
+             FROM transactions as t
+             LEFT JOIN offers as o
+             ON (t.offer_id == o.id)
+             WHERE o.seller_id=? AND status="PENDING"'''
+    rows = conn.execute(sql, (account_id,)).fetchall()
     return rows
 
 
@@ -237,9 +238,11 @@ def get_transaction_buyer(conn, tx_id):
 
 
 def get_transaction_seller(conn, tx_id):
-    sql = '''SELECT seller_id
-             FROM transactions
-             WHERE id=?'''
+    sql = '''SELECT o.seller_id
+             FROM transactions as t
+             LEFT JOIN offer as o
+             ON (t.offer_id == o.id)
+             WHERE t.id=?'''
     row = conn.execute(sql, (tx_id,)).fetchone()
     if row: return row[0]
     return row
@@ -251,6 +254,16 @@ def get_transaction_status(cursor, tx_id):
              WHERE id=?'''
     row = cursor.execute(sql, (tx_id,)).fetchone()
     if row: rows[0]
+    return row
+
+
+def offers_join_transactions_by_tx_id(conn, tx_id):
+    sql = '''SELECT *
+             FROM offers as o
+             LEFT JOIN transactions as t
+             ON (o.id == t.offer_id)
+             WHERE t.id=?'''
+    row = conn.execute(sql, (tx_id,)).fetchone()
     return row
 
 

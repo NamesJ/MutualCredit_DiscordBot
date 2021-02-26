@@ -47,7 +47,7 @@ class MutualCreditClient (discord.Client):
             func = getattr(self, 'handle_' + cmd)
             # membership check for members-only functions
             if cmd not in ['create_account']:
-                if not cs.isMember(user.id):
+                if not self.isMember(user.id):
                     raise UserPermissionError('You must be a member to do that')
         except AttributeError as e:
             await message.reply(f'I don\'t know the command {cmd}')
@@ -458,6 +458,8 @@ class MutualCreditClient (discord.Client):
 
 
     async def on_message(self, message):
+        print(f'client.guilds: {client.guilds}')
+
         if message.content.startswith('!'):
             try:
                 await self.run_command(message)
@@ -467,14 +469,28 @@ class MutualCreditClient (discord.Client):
                 print(str(e))
 
 
+    def isMember(self, account_id):
+        user = get(self.get_all_members(), id=account_id)
+        guild = get(self.guilds, name='MyDevServer')
+        role = get(guild.roles, name='member')
+
+        if role in user.roles:
+            return True
+
+        return False
+
+
+
+load_dotenv()
+TOKEN = os.getenv('DISCORD_TOKEN')
+intents = discord.Intents.default()
+intents.members = True
+client = MutualCreditClient(command_prefix='!', intents=intents)
+
+
 
 
 if __name__ == '__main__':
-    load_dotenv()
-    TOKEN = os.getenv('DISCORD_TOKEN')
-    intents = discord.Intents.default()
-    intents.members = True
-    client = MutualCreditClient(command_prefix='!', intents=intents)
     try:
         client.run(TOKEN)
     except Exception as e:
