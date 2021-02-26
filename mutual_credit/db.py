@@ -92,7 +92,7 @@ def create_transaction(conn, tx):
     sql = '''INSERT INTO transactions(id, buyer_id, seller_id, offer_id, status,
                 start_timestamp, end_timestamp)
              VALUES(?, ?, ?, ?, ?, ?, ?)'''
-    conn.execute(sql, (uuid.uuid4().hex, *tx, int(time.time()), None))
+    conn.execute(sql, tx)
 
     return tx[0]
 

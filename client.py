@@ -145,7 +145,7 @@ class MutualCreditClient (discord.Client):
                 response += f'{i+1}/{total_offers}:'
 
             try:
-                cs.createTransaction(user.id, offer_id)
+                tx_id = cs.createTransaction(user.id, offer_id)
                 available_balance = cs.getAvailableBalance(user.id)
             except TransactionIDError as e:
                 response += f' Skipping offer {offer_id}.'
@@ -157,7 +157,7 @@ class MutualCreditClient (discord.Client):
                 response += f' Skipping offer {offer_id}.'
                 response += ' You can\'t buy your own offer.'
             else:
-                response += f' Sent buy request for {offer_id}.\n'
+                response += f' Created buy request with ID {tx_id}.\n'
                 response += f'New available balance: ${available_balance}\n'
 
         # remove last line break
