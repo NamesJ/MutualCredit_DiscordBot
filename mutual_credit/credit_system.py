@@ -53,6 +53,9 @@ def addCategoriesToOffer(member_id, offer_id, categories):
         seller_id = db.get_offer_seller(conn, offer_id)
         current_categories = db.get_offer_categories(conn, offer_id)
 
+    if seller_id is None:
+        raise OfferIDError(f'An offer with ID {offer_id} does not exist.')
+
     if member_id != seller_id:
         raise UserPermissionError('User tried to alter another members offer')
 

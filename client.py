@@ -65,6 +65,8 @@ class MutualCreditClient (discord.Client):
 
         try:
             cs.addCategoriesToOffer(user.id, offer_id, categories)
+        except OfferIDError as e:
+            await message.reply(f'An offer with ID {offer_id} does not exist')
         except UserPermissionError as e:
             await message.reply('You are not allowed to edit someone else\'s offer')
         else:
