@@ -242,8 +242,6 @@ class MutualCreditClient (discord.Client):
         user = message.author
         offer_ids = args[1:]
 
-        print(f'handle_delete_offers(): offer_ids={offer_ids}')
-
         response = ''
         for i in range(len(offer_ids)):
             print(f'offer_ids[{i}] == {offer_ids[i]}')
@@ -275,7 +273,44 @@ class MutualCreditClient (discord.Client):
 
 
     async def handle_deny(self, message):
-        await message.reply('This command is not yet implemented.')
+        args = shlex.split(message.content)
+        if len(args) < 2:
+            await message.reply(f'You must provide at least one trannsaction ID.')
+            return
+
+        user = message.author
+        tx_ids = args[1:]
+
+        total_txs = len(tx_ids)
+        response = ''
+        for i in range(total_txs):
+            tx_id = tx_ids[i]
+
+            if total_txs > 1:
+                response += f'{i+1}/{total_txs}:'
+
+            try:
+                cs.denyTransaction(user.id, tx_id)
+                available_balance = cs.getAvailableBalance(user.id)
+            except TransactionIDError as e:
+                response += f' Skipping transaction {tx_id}.'
+                response += ' A transaction with that ID doesn\'t exist.\n'
+            except MaxBalanceError as e:
+                response += f' Skipping transaction {tx_id}.'
+                response += ' You\'re balance is too high.\n'
+            except MinBalanceError as e:
+                response += f' Skipping transaction {tx_id}.'
+                response += ' Buyer\'s balance is too low.\n'
+            except UserPermissionError as e:
+                response += f' Skipping transaction {tx_id}.'
+                response += ' You are not the seller for this transaction.\n'
+            else:
+                response += f' Denied transaction {tx_id}.\n'
+                response += f'New available balance: ${available_balance}\n'
+
+        # remove last line break
+        response = response[:-1]
+        await message.reply(response)
 
 
     async def handle_help(self, message):

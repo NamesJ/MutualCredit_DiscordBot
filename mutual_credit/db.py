@@ -214,7 +214,7 @@ def get_transaction(conn, tx_id):
              FROM transactions
              WHERE id=?'''
     row = conn.execute(sql, (tx_id,)).fetchone()
-    if row: rows[0]
+    if row: row[0]
     return row
 
 

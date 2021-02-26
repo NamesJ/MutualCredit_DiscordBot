@@ -189,11 +189,25 @@ def deleteOffer(account_id, offer_id):
         db.delete_offer(conn, offer_id)
 
 
-def denyTransaction(tx_id):
+def denyTransaction(account_id, tx_id):
+    if not isMember(account_id):
+        raise AccountIDError(f'Account with ID {account_id} does not exist')
+
     with db.connect() as conn:
-        tx_status = db.get_transaction_status(conn, tx_id)
-        if tx_status != 'PENDING':
-            raise Exception('Transaction status is not pending')
+        tx = db.get_transaction(conn, tx_id)
+
+    if tx is None:
+        raise TransactionIDError(f'Transaction with ID {tx_id} does not exist')
+
+    buyer_id, seller_id, status = tx[1], tx[2], tx[4]
+
+    if account_id != seller_id:
+        raise UserPermissionError(f'User with ID {account_id} tried to alter another members transaction')
+
+    if status != 'PENDING':
+        raise TransactionStatusError('Transaction status is not pending')
+
+    with db.connect() as conn:
         db.update_transaction_status(conn, tx_id, 'DENIED')
 
 
