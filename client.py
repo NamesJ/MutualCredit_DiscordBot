@@ -89,7 +89,7 @@ class MutualCreditClient (discord.Client):
 
             try:
                 cs.approveTransaction(user.id, tx_id)
-                balance = cs.getBalance(user.id)
+                balance = cs.getAccountBalance(user.id)
             except TransactionIDError as e:
                 response += f' Skipping transaction {tx_id}.'
                 response += ' A transaction with that ID doesn\'t exist.\n'
@@ -212,11 +212,68 @@ class MutualCreditClient (discord.Client):
 
 
     async def handle_create_offer(self, message):
-        await message.reply('This command is not yet implemented.')
+        args = shlex.split(message.content)
+        if len(args) < 4:
+            await message.reply(f'That\'s not enough arguments.')
+            return
+
+        user = message.author
+        title, price, description = args[1:4]
+
+        offer_id = cs.createOffer(user.id, description, price, title)
+
+        if len(args) > 4: # user supplies optional tags
+            cs.addCategoriesToOffer(user.id, offer_id, args[4:])
+
+        await message.reply(f'Created offer with ID {offer_id}.')
 
 
-    async def handle_delete_offer(self, message):
-        await message.reply('This command is not yet implemented.')
+    async def handle_delete_offers(self, message):
+        args = shlex.split(message.content)
+        if len(args) < 2:
+            await message.reply(f'You must provide at least one offer ID.')
+            return
+
+        user = message.author
+        offer_ids = args[1:]
+
+        print(f'handle_delete_offers(): offer_ids={offer_ids}')
+
+        response = ''
+        for i in range(len(offer_ids)):
+            print(f'offer_ids[{i}] == {offer_ids[i]}')
+            offer_id = offer_ids[i]
+
+            if len(offer_ids) > 1:
+                response += f'{i+1}/{len(offer_ids)}:'
+
+            try:
+                cs.approveTransaction(user.id, offer_id)
+                balance = cs.getAccountBalance(user.id)
+            except AccountIDError as e:
+                response = f'You must be a member to do that.'
+                break
+            except TransactionIDError as e:
+                response += f' Skipping offer {offer_id}.'
+                response += ' A transaction with that ID doesn\'t exist.\n'
+            except MaxBalanceError as e:
+                response += f' Skipping offer {offer_id}.'
+                response += ' You\'re balance is too high.\n'
+            except MinBalanceError as e:
+                response += f' Skipping offer {offer_id}.'
+                response += ' Buyer\'s balance is too low.\n'
+            except UserPermissionError as e:
+                response += f' Skipping offer {offer_id}.'
+                response += ' You are not the seller for this transaction.\n'
+            else:
+                response += f' Approved offer {offer_id}.\n'
+
+
+        response += f'New balance: ${balance}\n'
+
+        # remove last line break
+        response = response[:-1]
+        await message.reply(response)
 
 
     async def handle_deny(self, message):

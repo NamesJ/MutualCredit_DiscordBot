@@ -1,6 +1,7 @@
 import sqlite3
 from sqlite3 import Error
 import time
+import uuid
 
 
 DB_FILE = 'credit_system.db'
@@ -72,10 +73,12 @@ def create_account(conn, account):
 
 
 def create_offer(conn, offer):
-    offer = (uuid.uuid4().hex, *offer)
+    offer_id = uuid.uuid4().hex
     sql = '''INSERT INTO offers(id, seller_id, description, price, title)
              VALUES(?, ?, ?, ?, ?)'''
-    conn.execute(sql, offer)
+    conn.execute(sql, (offer_id, *offer))
+
+    return offer_id
 
 
 def create_offer_category(conn, offer_category):

@@ -13,7 +13,6 @@ from .errors import (
 import os
 import sqlite3
 import sys
-import uuid
 
 
 #changes
@@ -134,9 +133,13 @@ def createAccount(account_id):
         db.create_account(conn, account)
 
 
-def createOffer(account_id, description, price, title):
+def createOffer(seller_id, description, price, title):
+    offer = (seller_id, description, price, title)
+
     with db.connect() as conn:
-        db.create_offer(conn, offer)
+        offer_id = db.create_offer(conn, offer)
+
+    return offer_id
 
 
 # Should use a "pending balance" rather than actual balance of buyer
@@ -168,9 +171,18 @@ def deleteAccount(account_id):
 
 
 # delete could be dangerous, instead maybe have an 'enabled' flag
-def deleteOffer(offer_id):
+def deleteOffer(account_id, offer_id):
     with db.connect() as conn:
-        #with conn.cursor() as cur:
+        seller_id = db.get_offer_seller(offer_id)
+
+    if seller_id is None:
+        raise OfferIDError(f'Offer with ID {offer_id} does not exist.')
+
+    if account_id != seller_id:
+        raise UserPermissionError('User tried to delete another user\'s offer')
+
+    with db.connect() as conn:
+        with conn.cursor() as cur:
             db.delete_offer(conn, offer_id)
 
 
