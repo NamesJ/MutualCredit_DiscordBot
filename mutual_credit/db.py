@@ -1,5 +1,7 @@
 import sqlite3
 from sqlite3 import Error
+import time
+import uuid
 
 
 DB_FILE = 'credit_system.db'
@@ -53,7 +55,6 @@ def init_transactions_table(conn):
     _create_table(conn, ''' CREATE TABLE IF NOT EXISTS transactions (
                                 id text PRIMARY KEY,
                                 buyer_id int NOT NULL,
-                                seller_id int NOT NULL,
                                 offer_id text NOT NULL,
                                 status text NOT NULL,
                                 start_timestamp int NOT NULL,
@@ -71,24 +72,28 @@ def create_account(conn, account):
 
 
 def create_offer(conn, offer):
+    offer_id = uuid.uuid4().hex
     sql = '''INSERT INTO offers(id, seller_id, description, price, title)
              VALUES(?, ?, ?, ?, ?)'''
-    conn.execute(sql, offer)
+    conn.execute(sql, (offer_id, *offer))
+
+    return offer_id
 
 
 def create_offer_category(conn, offer_category):
-    print(f'db.create_offer_category(): offer_category={offer_category}')
     sql = '''INSERT INTO offer_categories(offer_id, category)
              VALUES(?, ?)'''
-    print(conn)
     conn.execute(sql, offer_category)
 
 
 def create_transaction(conn, tx):
-    sql = '''INSERT INTO transactions(id, buyer_id, seller_id, offer_id, status,
+    tx = (uuid.uuid4().hex, *tx, "PENDING", int(time.time()), None)
+    sql = '''INSERT INTO transactions(id, buyer_id, offer_id, status,
                 start_timestamp, end_timestamp)
-             VALUES(?, ?, ?, ?, ?, ?, ?)'''
+             VALUES(?, ?, ?, ?, ?, ?)'''
     conn.execute(sql, tx)
+
+    return tx[0]
 
 
 def delete_account(cursor, account_id):
@@ -97,33 +102,34 @@ def delete_account(cursor, account_id):
     cursor.execute(sql, (account_id,))
 
 
-def delete_offer(cursor, offer_id):
+def delete_offer(conn, offer_id):
     sql = '''DELETE FROM offers
              WHERE id=?'''
-    cursor.execute(sql, (offer_id,))
+    conn.execute(sql, (offer_id,))
 
 
-def delete_offer_category(conn, offer_category):
+def delete_offer_category(conn, offer_id, category):
     sql = '''DELETE FROM offer_categories
              WHERE offer_id=? AND category=?'''
-    conn.execute(sql, offer_category)
+    conn.execute(sql, (offer_id, category))
 
 
-def get_account_balance(cursor, account_id):
+def get_account_balance(conn, account_id):
     sql = '''SELECT balance
              FROM accounts
              WHERE id=?'''
-    rows = cursor.execute(sql, (account_id,)).fetchall()
-    return rows[0][0]
+    row = conn.execute(sql, (account_id,)).fetchone()
+    if row: return row[0]
+    return None
 
 
 # get min,max balance range for account
-def get_account_range(cursor, account_id):
+def get_account_range(conn, account_id):
     sql = '''SELECT min_balance, max_balance
              FROM accounts
              WHERE id=?'''
-    rows = cursor.execute(sql, (account_id,)).fetchall()
-    return rows[0]
+    row = conn.execute(sql, (account_id,)).fetchone()
+    return row
 
 
 def get_offers_by_seller(cursor, seller_id):
@@ -131,6 +137,7 @@ def get_offers_by_seller(cursor, seller_id):
              FROM offers
              WHERE seller_id=?'''
     rows = cursor.execute(sql, (seller_id,)).fetchall()
+    if len(rows) == 0: return None
     return rows
 
 
@@ -139,6 +146,7 @@ def get_offer_categories(cursor, offer_id):
              FROM offer_categories
              WHERE offer_id=?'''
     rows = cursor.execute(sql, (offer_id,)).fetchall()
+    if len(rows) > 0: rows = tuple([row[0] for row in rows])
     return rows
 
 
@@ -150,60 +158,113 @@ def get_offer_price(cursor, offer_id):
     return rows[0][0]
 
 
-def get_offer_seller(cursor, offer_id):
+def get_offer_seller(conn, offer_id):
     sql = '''SELECT seller_id
              FROM offers
              WHERE id=?'''
-    rows = cursor.execute(sql, (offer_id,)).fetchall()
-    return rows[0][0]
+    row = conn.execute(sql, (offer_id,)).fetchone()
+    if row: return row[0]
+    return row
+
+
+def get_offer_title(conn, offer_id):
+    sql = '''SELECT title
+             FROM offers
+             where id=?'''
+    row = conn.execute(sql, (offer_id, )).fetchone()
+    if row: return row[0]
+    return row
 
 
 def get_pending_tx_for_buyer(cursor, account_id):
     sql = '''SELECT *
              FROM transactions
-             WHERE buyer_id=? AND status=PENDING'''
+             WHERE buyer_id=? AND status="PENDING"'''
     rows = cursor.execute(sql, (account_id,)).fetchall()
     return rows
 
 
-def get_pending_tx_for_seller(cursor, account_id):
+def get_pending_tx_for_seller(conn, account_id):
     sql = '''SELECT *
-             FROM transactions
-             WHERE seller_id=? AND status=PENDING'''
-    rows = cursor.execute(sql, (account_id,)).fetchall()
+             FROM transactions as t
+             LEFT JOIN offers as o
+             ON (t.offer_id == o.id)
+             WHERE o.seller_id=? AND status="PENDING"'''
+    rows = conn.execute(sql, (account_id,)).fetchall()
     return rows
 
 
-def get_transaction(cursor, tx_id):
+def get_total_pending_credits_by_account(conn, account_id):
+    sql = '''SELECT sum(o.price)
+                    FROM offers as o
+                    LEFT JOIN transactions as t
+                    ON (o.id == t.offer_id)
+                    WHERE t.seller_id=? AND t.status="PENDING"
+                    GROUP BY t.seller_id'''
+    row = conn.execute(sql, (account_id,)).fetchone()
+    if row == None:
+        return 0
+    return row[0]
+
+
+def get_total_pending_debits_by_account(conn, account_id):
+    sql = '''SELECT sum(o.price)
+                    FROM offers as o
+                    LEFT JOIN transactions as t
+                    ON (o.id == t.offer_id)
+                    WHERE t.buyer_id=? AND t.status="PENDING"
+                    GROUP BY t.buyer_id'''
+    row = conn.execute(sql, (account_id,)).fetchone()
+    if row == None:
+        return 0
+    return row[0]
+
+
+def get_transaction(conn, tx_id):
     sql = '''SELECT *
              FROM transactions
              WHERE id=?'''
-    rows = cursor.execute(sql, (tx_id,)).fetchall()
-    return rows[0]
+    row = conn.execute(sql, (tx_id,)).fetchone()
+    return row
 
 
 def get_transaction_buyer(conn, tx_id):
     sql = '''SELECT buyer_id
              FROM transactions
              WHERE id=?'''
-    rows = conn.execute(sql, (tx_id,)).fetchall()
-    return rows[0][0]
+    row = conn.execute(sql, (tx_id,)).fetchone()
+    if row: return row[0]
+    return row
 
 
 def get_transaction_seller(conn, tx_id):
-    sql = '''SELECT seller_id
-             FROM transactions
-             WHERE id=?'''
-    rows = conn.execute(sql, (tx_id,)).fetchall()
-    return rows[0][0]
+    sql = '''SELECT o.seller_id
+             FROM transactions as t
+             LEFT JOIN offer as o
+             ON (t.offer_id == o.id)
+             WHERE t.id=?'''
+    row = conn.execute(sql, (tx_id,)).fetchone()
+    if row: return row[0]
+    return row
 
 
 def get_transaction_status(cursor, tx_id):
     sql = '''SELECT status
              FROM transactions
              WHERE id=?'''
-    rows = cursor.execute(sql, (tx_id,)).fetchall()
-    return rows[0][0]
+    row = cursor.execute(sql, (tx_id,)).fetchone()
+    if row: rows[0]
+    return row
+
+
+def offers_join_transactions_by_tx_id(conn, tx_id):
+    sql = '''SELECT *
+             FROM offers as o
+             LEFT JOIN transactions as t
+             ON (o.id == t.offer_id)
+             WHERE t.id=?'''
+    row = conn.execute(sql, (tx_id,)).fetchone()
+    return row
 
 
 def update_account_balance(conn, account_id, balance):
@@ -215,7 +276,13 @@ def update_account_balance(conn, account_id, balance):
 
 # used for cancel, deny, and approve (checks)
 def update_transaction_status(cursor, tx_id, status):
-    sql = '''UPDATE transactions
-             SET status=?
-             WHERE id=?'''
-    cursor.execute(sql, (status, tx_id))
+    if status == 'APPROVED':
+        sql = '''UPDATE transactions
+                 SET status=?, end_timestamp=?
+                 WHERE id=?'''
+        cursor.execute(sql, (status, int(time.time()), tx_id))
+    else:
+        sql = '''UPDATE transactions
+                 SET status=?
+                 WHERE id=?'''
+        cursor.execute(sql, (status, tx_id))
