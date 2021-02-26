@@ -244,7 +244,6 @@ class MutualCreditClient (discord.Client):
 
         response = ''
         for i in range(len(offer_ids)):
-            print(f'offer_ids[{i}] == {offer_ids[i]}')
             offer_id = offer_ids[i]
 
             if len(offer_ids) > 1:
@@ -373,11 +372,28 @@ class MutualCreditClient (discord.Client):
         else:
             response = f'{mention}\'s Offers:\n'
 
-            offer_strfmt = '{4} | ${3}\n{2}\n{0}\n\n'
-            for offer in offers:
-                response += offer_strfmt.format(*offer)
+            offer_strfmt = '{title} | ${price}\n{desc}\nCategories: {cats}\nID: {off_id}\n\n'
+            print(f'offers: {offers}')
 
-            #strip last two line breaks
+            for offer in offers:
+                print(f'offer: {offer}')
+                categories = cs.getOfferCategories(offer[0])
+                if len(categories):
+                    categories = ', '.join(categories)
+                else:
+                    categories = '---'
+
+
+                response += offer_strfmt.format(
+                    off_id = offer[0],
+                    sell_id = offer[1],
+                    desc = offer[2],
+                    price = offer[3],
+                    title = offer[4],
+                    cats = categories
+                )
+
+            #strip last line breaks
             response = response[:-2]
             await message.reply(response)
 

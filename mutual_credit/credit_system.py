@@ -226,11 +226,8 @@ def getOfferCategories(offer_id):
         seller_id = db.get_offer_seller(conn, offer_id)
         result = db.get_offer_categories(conn, offer_id)
 
-    if len(result) == 0:
+    if seller_id is None:
         raise OfferIDError(f'Offer with ID {offer_id} does not exist')
-
-    if len(result) > 0:
-        result = list([item[0] for item in result])
 
     return result
 

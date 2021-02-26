@@ -147,6 +147,7 @@ def get_offer_categories(cursor, offer_id):
              FROM offer_categories
              WHERE offer_id=?'''
     rows = cursor.execute(sql, (offer_id,)).fetchall()
+    if len(rows) > 0: rows = tuple([row[0] for row in rows])
     return rows
 
 
