@@ -60,7 +60,6 @@ def init_transactions_table(conn):
                                 start_timestamp int NOT NULL,
                                 end_timestamp int,
                                 FOREIGN KEY(buyer_id) REFERENCES members(id),
-                                FOREIGN KEY(seller_id) REFERENCES members(id),
                                 FOREIGN KEY(offer_id) REFERENCES offers(id)
                             );''')
 
@@ -199,8 +198,8 @@ def get_total_pending_credits_by_account(conn, account_id):
                     FROM offers as o
                     LEFT JOIN transactions as t
                     ON (o.id == t.offer_id)
-                    WHERE t.seller_id=? AND t.status="PENDING"
-                    GROUP BY t.seller_id'''
+                    WHERE o.seller_id=? AND t.status="PENDING"
+                    GROUP BY o.seller_id'''
     row = conn.execute(sql, (account_id,)).fetchone()
     if row == None:
         return 0
