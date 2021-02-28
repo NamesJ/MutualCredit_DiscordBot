@@ -120,13 +120,13 @@ def createAccount(account_id):
     account = (account_id, 0, DFLT_CONFIG['max_balance'],
                                                     DFLT_CONFIG['min_balance'])
 
-    balance = getAccountBalance(account_id)
-
-    if balance is not None: # account already exists
+    try:
+        balance = getAccountBalance(account_id)
+    except AccountIDError as e: # account doesn't yet exist (expected)
+        with db.connect() as conn:
+            db.create_account(conn, account)
+    else:
         raise AccountIDError(f'Account with ID {account_id} already exists.')
-
-    with db.connect() as conn:
-        db.create_account(conn, account)
 
 
 def createOffer(seller_id, description, price, title):
