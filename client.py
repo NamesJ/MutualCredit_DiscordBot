@@ -471,11 +471,14 @@ class MutualCreditClient (discord.Client):
 
     def isMember(self, account_id):
         user = get(self.get_all_members(), id=account_id)
-        guild = get(self.guilds, name='MyDevServer')
-        role = get(guild.roles, name='member')
 
-        if role in user.roles:
-            return True
+        for guild in self.guilds:
+            role = get(guild.roles, name='member')
+            if role is None:
+                continue
+
+            if role in user.roles:
+                return True
 
         return False
 
