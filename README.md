@@ -4,8 +4,6 @@ A Discord Bot that adds a mutual credit system to your server.
 *Note: This project is in very early alpha. It is not yet ready for actual use.*
 
 ## Todo
-* README
-  ** Better info to help devs to get started contributing
 * Diagrams
   ** User workflow diagrams to make high-level understanding of how things work easier to understand.
 * Data integrity
