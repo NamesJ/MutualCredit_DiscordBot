@@ -394,10 +394,8 @@ class MutualCreditClient (discord.Client):
             response = f'{mention}\'s Offers:\n\n'
 
             offer_strfmt = '{title} | ${price}\n{desc}\nCategories: {cats}\nID: {off_id}\n\n'
-            print(f'offers: {offers}')
 
             for offer in offers:
-                print(f'offer: {offer}')
                 categories = cs.getOfferCategories(offer[0])
                 if len(categories):
                     categories = ', '.join(categories)
@@ -458,8 +456,6 @@ class MutualCreditClient (discord.Client):
 
 
     async def on_message(self, message):
-        print(f'client.guilds: {client.guilds}')
-
         if message.content.startswith('!'):
             try:
                 await self.run_command(message)
