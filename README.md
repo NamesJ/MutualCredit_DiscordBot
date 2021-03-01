@@ -54,17 +54,50 @@ For now, giving your bot `Administrator` permissions will due.
 
 Note: You may need to enable `SERVER MEMBERS INTENT` on the bot page.
 
-Create a `.env` file in the root project folder. It should contain the bot API token for your bot as follows: `DISCORD_TOKEN={YOUR_DISCORD_TOKEN_HERE}`
 
-Before you can run the project you will need to install the Discord API wrapper for python:
+### Setup virtual environment for project
+
+Set up a virtual environment for development by running `python -m venv <venv>`, where `<venv>` is the path for a directory to store virtual environment files in.
+
+
+### Activate the virtual environment
 ```
-pip install -U discord.py
+# Linux
+source <venv>/bin/activate
 
-# or if you're on windows
-python -m pip install -U discord.py
+# Windows
+## Command Prompt
+<venv>\Scripts\activate.bat
+## Powershell
+<venv>\Scripts\activate.ps1
 ```
 
-Run `python bot.py`.
+*Note: you may have to update the execution policy for Powershell in order to run the activate script, as it is unsigned.*
+
+Once the virtual environment is activated `(<venv>)` will appear to the left of your command prompt line.
+
+
+### Install dependencies in virtual environment
+
+Now, with the virtual environment activated, install the project dependencies with pip:
+```
+# Unix/maxOS
+python -m pip install -r requirements.txt
+
+Windows
+py -m pip install -r requirements.txt
+```
+
+
+### Configure client Discord API key
+
+Create a `.env` file in the root project folder.
+It should contain the bot API token for your bot as follows: `DISCORD_TOKEN=<BOT_CLIENT_TOKEN>`, replacing `<BOT_CLIENT_TOKEN>` with the one found on the bot page of your application in the Discord developer portal.
+
+Run `python client.py`.
+
+
+### Configure the Discord server
 
 In the Discord server you connected the app to, add a new user role `member`.
 
