@@ -44,9 +44,14 @@ Feel free to join and give the system a try:
 https://discord.gg/ECKkNrjWrf
 
 ## Notes
+*Python 3.7 or greater required*
+
+
 You will need at least two users (other than the bot) to use this system.
 
 ## Deploy
+
+
 First, set up an application and bot in the Discord developer portal and a guild (server) to use for testing. For info on how to do that you can follow the first part of [this guide](https://realpython.com/how-to-make-a-discord-bot-python/#how-to-make-a-discord-bot-in-the-developer-portal).
 
 *TODO: Setting up bot permissions section*
