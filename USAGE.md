@@ -5,6 +5,28 @@
 The bot will only accept commands from users with the `member` role, which prevents non-`member`s from using the bot.
 
 
+## A note on where you can run commands
+
+### Public channels ONLY
+- `!list_offers`
+
+### Public channels OR Private DM channel with bot
+- `!add_categories`
+- `!approve`
+- `!balance`
+- `!buy`
+- `!cancel`
+- `!create_account`
+- `!create_offer`
+- `!delete_offers`
+- `!deny`
+- `!help`
+- `!kill`
+- `!list_categories`
+- `!remove_categories`
+- `!show_range`
+
+
 ## Creating an account
 ```
 !create_account
@@ -25,6 +47,15 @@ You will not be able to run any commands (except `!help`) until you create an ac
 ```
 
 
+## List offers by member
+```
+!list_offers @USER
+```
+`@USER` should be a *mention* to another user.
+A more convenient way of listing your own offers is `!list_offers` without any arguments.
+*Note: This command can only be used in a public channel as the mention suggestion system does not work in private DM with bot.*
+
+
 ## Creating a new offer
 ```
 # Create an offer without categories
@@ -43,14 +74,6 @@ You will not be able to run any commands (except `!help`) until you create an ac
 # Deleting multiple offers
 !delete_offers OFFER_ID_1 OFFER_ID_2 OFFER_ID_3 ...
 ```
-
-
-## List offers by member
-```
-!list_offers @USER
-```
-`@USER` should be a *mention* to another user.
-A more convenient way of listing your own offers is `!list_offers` without any arguments.
 
 
 ## List the categories associated with an offer
