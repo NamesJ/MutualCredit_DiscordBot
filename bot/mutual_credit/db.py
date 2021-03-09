@@ -153,8 +153,9 @@ def get_offer_price(cursor, offer_id):
     sql = '''SELECT price
              FROM offers
              WHERE id=?'''
-    rows = cursor.execute(sql, (offer_id,)).fetchall()
-    return rows[0][0]
+    row = cursor.execute(sql, (offer_id,)).fetchone()
+    if row: return row[0]
+    return row
 
 
 def get_offer_seller(conn, offer_id):

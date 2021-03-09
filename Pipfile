@@ -1,0 +1,13 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+"discord.py" = "==1.6.0"
+python-dotenv = "==0.15.0"
+
+[dev-packages]
+
+[requires]
+python_version = "3.8"

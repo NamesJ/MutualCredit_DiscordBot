@@ -70,11 +70,13 @@ def addCategoriesToOffer(member_id, offer_id, categories):
 
 
 def approveTransaction(account_id, tx_id):
-    buyer_id, offer_id, status = getTransaction(tx_id)[1:3]
-    seller_id = getOfferSeller(offer_id)
+    tx = getTransaction(tx_id)
 
     if tx is None:
         raise TransactionIDError(f'Transaction with ID {tx_id} does not exist')
+
+    buyer_id, offer_id, status = tx[1:4]
+    seller_id = getOfferSeller(offer_id)
 
     if account_id != seller_id:
         raise UserPermissionError(f'User with ID {account_id} tried to alter another members transaction')
@@ -104,7 +106,7 @@ def cancelTransaction(account_id, tx_id):
     if tx is None:
         raise TransactionIDError(f'Transaction with ID {tx_id} does not exist')
 
-    buyer_id, offer_id, status = tx[1:3]
+    buyer_id, offer_id, status = tx[1:4]
 
     if account_id != buyer_id:
         raise UserPermissionError(f'User with ID {account_id} tried to alter another members transaction')
@@ -182,13 +184,12 @@ def deleteOffer(account_id, offer_id):
 
 
 def denyTransaction(account_id, tx_id):
-    with db.connect() as conn:
-        tx = getTransaction(tx_id)
+    tx = getTransaction(tx_id)
 
     if tx is None:
         raise TransactionIDError(f'Transaction with ID {tx_id} does not exist')
 
-    buyer_id, offer_id, status = tx[1:3]
+    buyer_id, offer_id, status = tx[1:4]
     seller_id = getOfferSeller(offer_id)
 
     if account_id != seller_id:
@@ -256,9 +257,6 @@ def getOffers(seller_id):
     with db.connect() as conn:
         offers = db.get_offers_by_seller(conn, seller_id)
 
-    if offers is None:
-        OfferIDError(f'No offer with ID {offer_id} exists.')
-
     return offers
 
 
@@ -310,6 +308,18 @@ def getTransactionBuyer(tx_id):
     return tx_buyer
 
 
+def getTransactionSeller(tx_id):
+    tx = getTransaction(tx_id)
+
+    if tx is None:
+        raise TransactionIDError(f'Transaction with ID {tx_id} does not exist')
+
+    buyer_id, offer_id, status = tx[1:4]
+    seller_id = getOfferSeller(offer_id)
+
+    return seller_id
+
+
 def getPendingBuys(account_id):
     with db.connect() as conn:
         buys = db.get_pending_tx_for_buyer(conn, account_id)
@@ -355,7 +365,7 @@ def removeCategoriesFromOffer(member_id, offer_id, categories):
         removed = []
 
         for category in categories:
-            if category in current_categories and category not in removed:
+            if category not in current_categories:
                 continue
 
             db.delete_offer_category(conn, offer_id, category)
