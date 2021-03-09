@@ -6,7 +6,7 @@ def role_check(client, account_id, role_name):
     user = get(client.get_all_members(), id=account_id)
 
     for guild in client.guilds:
-        role = get(guild.roles, name=role_name)
+        role = get(guild.roles, id=role_name)
         if role is None:
             continue
 
