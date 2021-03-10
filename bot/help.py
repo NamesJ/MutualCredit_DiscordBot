@@ -1,13 +1,14 @@
 from .utils import role_check
 
 import shlex
+import logging
+
+log = logging.getLogger(__name__)
 
 
-async def subcmd_long(client, message, args):
+async def subcmd_long(client, message, args, is_admin=False):
     if len(args) > 0:
         raise Exception(f'This command takes no arguments.')
-
-    user = message.author
 
     response = '''
 !help output
@@ -24,13 +25,13 @@ async def subcmd_long(client, message, args):
 `!account balance`
 
 **Add one or more categories to an offer (member-only)**
-`!category add OFFER_ID CATEGORY [CATEGORY ...]`
+`!tag add OFFER_ID TAG [TAG ...]`
 
 **Remote one or more categories from an offer (member-only)**
-`!category remove OFFER_ID CATEGORY [CATEGORY ...]`
+`!tag remove OFFER_ID TAG [TAG ...]`
 '''
 
-    if role_check(client, user.id, 'admin'):
+    if is_admin:
         response +='''
 **Show this help message**
 `!help`
@@ -41,7 +42,7 @@ async def subcmd_long(client, message, args):
 
     response += '''
 **Create a new offer (optionally with one or more categories)**
-`!offer add TITLE PRICE DESCRIPTION [CATEGORY CATEGORY ...]`
+`!offer add TITLE PRICE DESCRIPTION [TAG TAG ...]`
 
 **Remove one or more of your offers (member-only)**
 `!offer remove OFFER_ID [OFFER_ID OFFER_ID]`
@@ -70,11 +71,9 @@ async def subcmd_long(client, message, args):
     await message.reply(response)
 
 
-async def subcmd_short(client, message, args):
+async def subcmd_short(client, message, args, is_admin=False):
     if len(args) > 0:
         raise Exception(f'This command takes no arguments.')
-
-    user = message.author
 
     response = '''
 !help output
@@ -82,16 +81,16 @@ async def subcmd_short(client, message, args):
 `!account allowance`
 `!account balance`
 `!account create`
-`!category add OFFER_ID CATEGORY [CATEGORY ...]`
-`!category remove OFFER_ID CATEGORY [CATEGORY ...]`'''
+`!tag add OFFER_ID TAG [TAG ...]`
+`!tag remove OFFER_ID TAG [TAG ...]`'''
 
-    if role_check(client, user.id, 'admin'):
+    if is_admin:
         response +='''
 `!help`
 `!kill`'''
 
     response += '''
-`!offer add TITLE PRICE DESCRIPTION [CATEGORY CATEGORY ...]`
+`!offer add TITLE PRICE DESCRIPTION [TAG TAG ...]`
 `!offer remove OFFER_ID [OFFER_ID OFFER_ID]`
 `!offer show @USER`
 `!transaction cancel TRANSACTION_ID [TRANSACTION_ID TRANSACTION_ID...]`
@@ -102,6 +101,7 @@ async def subcmd_short(client, message, args):
 
 
 async def handle(client, message, args):
+    log.info(f'handle: arguments=({message, args})')
     subcmd = None
 
     if len(args) > 0:
@@ -109,14 +109,16 @@ async def handle(client, message, args):
         args = args[1:]
 
     user = message.author
+    is_admin = await role_check(client, user.id, 'admin')
+    is_member = await role_check(client, user.id, 'member')
 
-    if not role_check(client, user.id, 'member'):
-        await message.reply('No commands exist for non-members.')
-        return
+    if not is_member:
+        raise Exception('You are not a member.')
+
 
     if subcmd and subcmd == 'long':
-        await subcmd_long(client, message, args)
+        await subcmd_long(client, message, args, is_admin=is_admin)
         return
 
     else:
-        await subcmd_short(client, message, args)
+        await subcmd_short(client, message, args, is_admin=is_admin)

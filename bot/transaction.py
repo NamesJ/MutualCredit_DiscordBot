@@ -12,6 +12,9 @@ from .mutual_credit.errors import (
 from .utils import role_check, user_from_id
 
 import shlex
+import logging
+
+log = logging.getLogger(__name__)
 
 
 async def subcmd_approve(client, message, args):
@@ -21,14 +24,10 @@ async def subcmd_approve(client, message, args):
         raise Exception('You must provide at least one transaction ID.')
 
     user = message.author
-
-    if not role_check(client, user.id, 'member'):
-        message.reply('You are not a member.')
-
     tx_ids = args
-
     total_txs = len(tx_ids)
     response = ''
+
     for i in range(total_txs):
         tx_id = tx_ids[i]
 
@@ -53,7 +52,7 @@ async def subcmd_approve(client, message, args):
             response += f' Approved transaction {tx_id}.\n'
             response += f'New balance: ${balance}\n'
 
-            buyer = user_from_id(client, buyer_id)
+            buyer = await user_from_id(client, buyer_id)
             if buyer:
                 await buyer.create_dm()
                 content = f'{user.name} approved your buy request with'
@@ -72,10 +71,6 @@ async def subcmd_cancel(client, message, args):
         raise Exception('You must provide at least one trannsaction ID.')
 
     user = message.author
-
-    if not role_check(client, user.id, 'member'):
-        message.reply('You are not a member.')
-
     tx_ids = args
 
     total_txs = len(tx_ids)
@@ -103,7 +98,7 @@ async def subcmd_cancel(client, message, args):
             response += f' Cancelled transaction {tx_id}.\n'
             response += f'New available balance: ${balance}\n'
 
-            seller = user_from_id(client, seller_id)
+            seller = await user_from_id(client, seller_id)
             if seller:
                 await seller.create_dm()
                 content = f'{seller.name} cancelled their transaction request with'
@@ -122,10 +117,6 @@ async def subcmd_deny(client, message, args):
         raise Exception('You must provide at least one trannsaction ID.')
 
     user = message.author
-
-    if not role_check(client, user.id, 'member'):
-        message.reply('You are not a member.')
-
     tx_ids = args
 
     total_txs = len(tx_ids)
@@ -138,7 +129,9 @@ async def subcmd_deny(client, message, args):
 
         try:
             cs.denyTransaction(user.id, tx_id)
-            available_balance = cs.getAvailableBalance(user.id)
+            pending_credits = cs.getTotalPendingCredits(user.id)
+            buyer_id = cs.getTransactionBuyer(tx_id)
+            buyer_available = cs.getAvailableBalance(buyer_id)
         except TransactionIDError as e:
             response += f' Skipping transaction {tx_id}.'
             response += ' A transaction with that ID doesn\'t exist.\n'
@@ -153,7 +146,15 @@ async def subcmd_deny(client, message, args):
             response += ' You are not the seller for this transaction.\n'
         else:
             response += f' Denied transaction {tx_id}.\n'
-            #response += f'New available balance: ${available_balance}\n'
+            response += f'New pending credits: ${pending_credits}\n'
+            # notify buyer that seller denied their request
+            buyer = await user_from_id(client, buyer_id)
+            if buyer:
+                await buyer.create_dm()
+                content = f'{user.name} denied your transaction request: '
+                content += f'{tx_id}\n'
+                content += f'New available balance: ${buyer_available}\n'
+                await buyer.dm_channel.send(content)
 
     # remove last line break
     response = response[:-1]
@@ -167,10 +168,6 @@ async def subcmd_request(client, message, args):
         raise Exception('You must provide one or more offer IDs.')
 
     user = message.author
-
-    if not role_check(client, user.id, 'member'):
-        message.reply('You are not a member.')
-
     offer_ids = args
 
     total_offers = len(offer_ids)
@@ -199,7 +196,7 @@ async def subcmd_request(client, message, args):
             response += f' Created buy request with ID {tx_id}.\n'
             response += f'New available balance: ${available_balance}\n'
             # notify seller
-            seller = user_from_id(client, seller_id)
+            seller = await user_from_id(client, seller_id)
             if seller:
                 await seller.create_dm()
                 content = f'New buy request with ID {tx_id}'
@@ -221,7 +218,18 @@ async def handle(client, message, args):
     subcmd = args[0]
     args = args[1:]
 
+    user = message.author
+    is_admin = await role_check(client, user.id, 'admin')
+    is_member = await role_check(client, user.id, 'member')
+
     try:
+        # non-member sub-commands up here
+
+        # member-only sub-commands down here
+
+        if not is_member:
+            raise Exception('You are not a member.')
+
         if subcmd == 'approve':
             try:
                 await subcmd_approve(client, message, args)

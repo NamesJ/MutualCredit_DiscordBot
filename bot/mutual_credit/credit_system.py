@@ -34,18 +34,18 @@ def _init_db():
         db.init_transactions_table(conn)
 
 
-def addCategoryToOffer(member_id, offer_id, category):
+def addCategoryToOffer(member_id, offer_id, tag):
     seller_id = getOfferSeller(offer_id)
     Categories = getOfferCategories(offer_id)
 
     if member_id != seller_id:
         raise UserPermissionError('User tried to alter another members offer')
 
-    if category in categories:
+    if tag in categories:
         return
 
     with db.connect() as conn:
-        db.create_offer_category(conn, (offer_id, category))
+        db.create_offer_tag(conn, (offer_id, tag))
 
 
 def addCategoriesToOffer(member_id, offer_id, categories):
@@ -61,12 +61,12 @@ def addCategoriesToOffer(member_id, offer_id, categories):
     with db.connect() as conn:
         added = []
 
-        for category in categories:
-            if category in current_categories or category in added:
+        for tag in categories:
+            if tag in current_categories or tag in added:
                 continue
 
-            db.create_offer_category(conn, (offer_id, category))
-            added.append(category)
+            db.create_offer_tag(conn, (offer_id, tag))
+            added.append(tag)
 
 
 def approveTransaction(account_id, tx_id):
@@ -332,7 +332,7 @@ def getPendingSales(accountId):
     return sales
 
 
-def removeCategoryFromOffer(member_id, offer_id, category):
+def removeCategoryFromOffer(member_id, offer_id, tag):
     with db.connect() as conn:
         seller_id = getOfferSeller(offer_id)
         current_categories = getOfferCategories(offer_id)
@@ -343,11 +343,11 @@ def removeCategoryFromOffer(member_id, offer_id, category):
     if member_id != seller_id:
         raise UserPermissionError(f'User tried to alter offer of another user.')
 
-    if category not in current_categories:
+    if tag not in current_categories:
         return
 
     with db.connect() as conn:
-        db.delete_offer_category(conn, offer_id, category)
+        db.delete_offer_tag(conn, offer_id, tag)
 
 
 def removeCategoriesFromOffer(member_id, offer_id, categories):
@@ -364,12 +364,12 @@ def removeCategoriesFromOffer(member_id, offer_id, categories):
     with db.connect() as conn:
         removed = []
 
-        for category in categories:
-            if category not in current_categories:
+        for tag in categories:
+            if tag not in current_categories:
                 continue
 
-            db.delete_offer_category(conn, offer_id, category)
-            removed.append(category)
+            db.delete_offer_tag(conn, offer_id, tag)
+            removed.append(tag)
 
 
 

@@ -34,8 +34,8 @@ def init_accounts_table(conn):
 def init_offer_categories_table(conn):
     _create_table(conn, ''' CREATE TABLE IF NOT EXISTS offer_categories(
                                 offer_id text,
-                                category text,
-                                PRIMARY KEY (offer_id, category)
+                                tag text,
+                                PRIMARY KEY (offer_id, tag)
                             ); ''')
 
 
@@ -79,10 +79,10 @@ def create_offer(conn, offer):
     return offer_id
 
 
-def create_offer_category(conn, offer_category):
-    sql = '''INSERT INTO offer_categories(offer_id, category)
+def create_offer_tag(conn, offer_tag):
+    sql = '''INSERT INTO offer_categories(offer_id, tag)
              VALUES(?, ?)'''
-    conn.execute(sql, offer_category)
+    conn.execute(sql, offer_tag)
 
 
 def create_transaction(conn, tx):
@@ -107,10 +107,10 @@ def delete_offer(conn, offer_id):
     conn.execute(sql, (offer_id,))
 
 
-def delete_offer_category(conn, offer_id, category):
+def delete_offer_tag(conn, offer_id, tag):
     sql = '''DELETE FROM offer_categories
-             WHERE offer_id=? AND category=?'''
-    conn.execute(sql, (offer_id, category))
+             WHERE offer_id=? AND tag=?'''
+    conn.execute(sql, (offer_id, tag))
 
 
 def get_account_balance(conn, account_id):
@@ -141,7 +141,7 @@ def get_offers_by_seller(cursor, seller_id):
 
 
 def get_offer_categories(cursor, offer_id):
-    sql = '''SELECT category
+    sql = '''SELECT tag
              FROM offer_categories
              WHERE offer_id=?'''
     rows = cursor.execute(sql, (offer_id,)).fetchall()

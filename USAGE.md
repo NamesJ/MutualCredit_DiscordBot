@@ -14,9 +14,9 @@ The bot will only accept commands from users with the `member` role, which preve
 - `!account allowance`
 - `!account balance`
 - `!account create`
-- `!category add`
-- `!category remove`
-- `!category show`
+- `!tag add`
+- `!tag remove`
+- `!tag show`
 - `!offer add`
 - `!offer remove`
 - `!offer show` *(for your own account)*
@@ -41,13 +41,13 @@ The bot will only accept commands from users with the `member` role, which preve
 `!account balance`
 
 **Add one or more categories to an offer**
-`!category add OFFER_ID CATEGORY [CATEGORY ...]`
+`!tag add OFFER_ID TAG [TAG ...]`
 
 **Remote one or more categories from an offer**
-`!category remove OFFER_ID CATEGORY [CATEGORY ...]`
+`!tag remove OFFER_ID TAG [TAG ...]`
 
 **Create a new offer (optionally with one or more categories)**
-`!offer add TITLE PRICE DESCRIPTION [CATEGORY CATEGORY ...]`
+`!offer add TITLE PRICE DESCRIPTION [TAG TAG ...]`
 
 **Remove one or more of your offers**
 `!offer remove OFFER_ID [OFFER_ID OFFER_ID]`
@@ -109,7 +109,7 @@ A more convenient way of listing your own offers is `!offer show` without any ad
 !offer add TITLE PRICE DESCRIPTION
 
 #Create an offer with categories (optional)
-!offer add TITLE PRICE DESCRIPTION CATEGORY_1 CATEGORY_2 CATEGORY_3 ...
+!offer add TITLE PRICE DESCRIPTION TAG_1 TAG_2 TAG_3 ...
 ```
 
 
@@ -125,19 +125,19 @@ A more convenient way of listing your own offers is `!offer show` without any ad
 
 ## List the categories associated with an offer
 ```
-!category show OFFER_ID
+!tag show OFFER_ID
 ```
 
 
-## Add category/categories to your offer
+## Add tag/categories to your offer
 ```
-!category add OFFER_ID CATEGORY_1 CATEGORY_2 CATEGORY_3 ...
+!tag add OFFER_ID TAG_1 TAG_2 TAG_3 ...
 ```
 
 
-## Remove category/categories from one of your offers
+## Remove tag/categories from one of your offers
 ```
-!category remove OFFER_ID CATEGORY_1 CATEGORY_2 CATEGORY_3 ...
+!tag remove OFFER_ID TAG_1 TAG_2 TAG_3 ...
 ```
 
 

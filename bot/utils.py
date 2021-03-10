@@ -1,17 +1,34 @@
+import discord.utils
 from discord.utils import get
 
+import logging
+
+log = logging.getLogger(__name__)
 
 
-def role_check(client, account_id, role_name):
-    user = get(client.get_all_members(), id=account_id)
+async def role_check(client, account_id, role_name):
+    log.debug(f'role_check: arguments=({account_id}, {role_name})')
+
+    all_roles = []
 
     for guild in client.guilds:
-        role = get(guild.roles, id=role_name)
-        if role is None:
-            continue
+        all_roles += guild.roles
 
-        if role in user.roles:
-            return True
+    allowed_role = discord.utils.find(lambda r: r.name==role_name, all_roles)
+
+    if not allowed_role:
+        log.error(f'role_check: role "{role_name}" is not known by client')
+
+    user = discord.utils.find(lambda m: m.id==account_id, client.get_all_members())
+
+    if not user:
+        log.debug(f'role_check: user with ID "{account_id}" not found in client members list')
+
+    if allowed_role in user.roles:
+        log.debug(f'role_check: pass')
+        return True
+
+    log.debug(f'role_check: fail')
 
     return False
 
@@ -47,7 +64,7 @@ def mention_to_id(mention):
         return None
 
 
-def user_from_id(client, user_id):
+async def user_from_id(client, user_id):
     user = get(client.get_all_members(), id=user_id)
 
     return user

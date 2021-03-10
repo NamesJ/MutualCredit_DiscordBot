@@ -2,13 +2,20 @@ from bot.client import client
 
 from dotenv import load_dotenv
 import os
+import logging
+
+log = logging.getLogger(__name__)
 
 load_dotenv()
-TOKEN = os.getenv('DISCORD_TOKEN')
+
+
+logging.basicConfig(level=os.getenv('LOG_LEVEL', logging.INFO))
+
+
 
 
 if __name__ == '__main__':
     try:
-        client.run(TOKEN)
+        client.run(os.getenv('DISCORD_TOKEN'))
     except Exception as e:
-        print(str(e))
+        log.exception(f'Exception in main: {str(e)}')

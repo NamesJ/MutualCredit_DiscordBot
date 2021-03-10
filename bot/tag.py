@@ -4,21 +4,21 @@ from .mutual_credit.errors import OfferIDError, UserPermissionError
 from .utils import role_check
 
 import shlex
+import logging
+
+log = logging.getLogger(__name__)
 
 
 async def subcmd_add(client, message, args):
     ''' Create one or more categories for offer of caller '''
 
     if len(args) < 2:
-        raise Exception('Must provide at least one offer ID and one category')
+        raise Exception('Must provide at least one offer ID and one tag')
 
     offer_id = args[0]
     categories = args[1:]
 
     user = message.author
-
-    if not role_check(client, user.id, 'member'):
-        message.reply('You are not a member.')
 
     try:
         cs.addCategoriesToOffer(user.id, offer_id, categories)
@@ -37,17 +37,13 @@ async def subcmd_remove(client, message, args):
     ''' Remove one or more categories from offer of caller '''
 
     if len(args) < 2:
-        raise Exception('Must provide at least one offer ID and one category')
+        raise Exception('Must provide at least one offer ID and one tag')
 
     offer_id = args[0]
     categories = args[1:]
 
-    print(categories)
-
     user = message.author
 
-    if not role_check(client, user.id, 'member'):
-        message.reply('You are not a member.')
 
     try:
         cs.removeCategoriesFromOffer(user.id, offer_id, categories)
@@ -69,9 +65,6 @@ async def subcmd_show(client, message, args):
 
     user = message.author
 
-    if not role_check(client, user.id, 'member'):
-        message.reply('You are not a member.')
-
     try:
         categories = cs.getOfferCategories(offer_id)
         categories = ', '.join(categories)
@@ -88,7 +81,18 @@ async def handle(client, message, args):
     subcmd = args[0]
     args = args[1:]
 
+    user = message.author
+    is_admin = await role_check(client, user.id, 'admin')
+    is_member = await role_check(client, user.id, 'member')
+
     try:
+        # non-member sub-commands up here
+
+        # member-only sub-commands down here
+
+        if not is_member:
+            raise Exception('You are not a member.')
+
         if subcmd == 'add':
             try:
                 await subcmd_add(client, message, args)

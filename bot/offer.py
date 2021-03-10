@@ -11,6 +11,9 @@ from .mutual_credit.errors import (
 from .utils import user_from_id, mention_to_id, role_check
 
 import shlex
+import logging
+
+log = logging.getLogger(__name__)
 
 
 
@@ -21,10 +24,6 @@ async def subcmd_add(client, message, args):
         raise Exception('Invalid number of arguments.')
 
     user = message.author
-
-    if not role_check(client, user.id, 'member'):
-        message.reply('You are not a member.')
-
     title, price, description = args[:3]
 
     offer_id = cs.createOffer(user.id, description, price, title)
@@ -42,11 +41,7 @@ async def subcmd_remove(client, message, args):
         raise Exception(f'You must provide at least one offer ID.')
 
     user = message.author
-
     offer_ids = args
-
-    if not role_check(client, user.id, 'member'):
-        message.reply('You are not a member.')
 
     response = ''
     for i in range(len(offer_ids)):
@@ -81,10 +76,6 @@ async def subcmd_show(client, message, args):
     ''' List all offers for account '''
 
     user = message.author
-
-    if not role_check(client, user.id, 'member'):
-        message.reply('You are not a member.')
-
     seller_name = None
     seller_id = None
 
@@ -95,7 +86,7 @@ async def subcmd_show(client, message, args):
         seller_id = mention_to_id(args[0])
         if not seller_id:
             raise Exception('Invalid user mention provided')
-        seller = user_from_id(client, seller_id)
+        seller = await user_from_id(client, seller_id)
         seller_name = seller.name
     else:
         raise Exception('Invalid number of arguments')
@@ -142,7 +133,18 @@ async def handle(client, message, args):
     subcmd = args[0]
     args = args[1:]
 
+    user = message.author
+    is_admin = await role_check(client, user.id, 'admin')
+    is_member = await role_check(client, user.id, 'member')
+
     try:
+        # non-member sub-commands up here
+
+        # member-only sub-commands down here
+
+        if not is_member:
+            raise Exception('You are not a member.')
+
         if subcmd == 'add':
             try:
                 await subcmd_add(client, message, args)

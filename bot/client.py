@@ -1,4 +1,4 @@
-from . import account, category, help, kill, offer, transaction
+from . import account, help, kill, offer, tag, transaction
 
 from .mutual_credit.errors import UserPermissionError
 
@@ -36,8 +36,8 @@ class MutualCreditClient (discord.Client):
             #func = getattr(self, 'handle_' + cmd)
             if cmd == 'account':
                 await account.handle(client, message, args)
-            elif cmd == 'category':
-                await category.handle(client, message, args)
+            elif cmd == 'tag':
+                await tag.handle(client, message, args)
             elif cmd == 'offer':
                 await offer.handle(client, message, args)
             elif cmd == 'help':
@@ -52,6 +52,12 @@ class MutualCreditClient (discord.Client):
         except Exception as e:
             await message.reply(str(e))
             raise e
+
+    async def on_member_update(self, before, after):
+        # TODO: check if member just recieved the 'member' role
+        #       and if true: create a new account for them (if one does not)
+        #       already exist
+        pass
 
 
     async def on_message(self, message):
