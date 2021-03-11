@@ -10,7 +10,7 @@ import os
 import shlex
 import logging
 
-logging.basicConfig(level=logging.INFO)
+log = logging.getLogger(__name__)
 
 intents = discord.Intents.default()
 intents.members = True
@@ -26,10 +26,12 @@ class MutualCreditClient (discord.Client):
     async def on_command(self, message):
         args = shlex.split(message.content)
 
+        user = message.author
+
+        log.info(f'{message}')
+
         cmd = args[0][1:]
         args = args[1:]
-
-        user = message.author
 
         try:
             # non-member commands

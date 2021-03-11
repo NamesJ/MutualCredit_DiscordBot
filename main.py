@@ -9,7 +9,11 @@ log = logging.getLogger(__name__)
 load_dotenv()
 
 
-logging.basicConfig(level=os.getenv('LOG_LEVEL', logging.INFO))
+logging.basicConfig(filename=os.getenv('LOG_FILE', 'log.txt'),
+                    filemode='a',
+                    format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
+                    datefmt='%H:%M:%S',
+                    level=os.getenv('LOG_LEVEL', logging.INFO))
 
 
 
