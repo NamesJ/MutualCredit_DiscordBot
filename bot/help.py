@@ -37,8 +37,8 @@ async def subcmd_long(client, message, args, is_admin=False):
 
     if is_admin:
         response += f'''
-**Show this help message**
-`{COMMAND_PREFIX}help`
+**Show the help message (add `full` for more output)**
+`{COMMAND_PREFIX}help [full]`
 
 **Kill the bot (admin-only)**
 `{COMMAND_PREFIX}kill`
@@ -90,7 +90,7 @@ async def subcmd_short(client, message, args, is_admin=False):
 
     if is_admin:
         response += f'''
-`{COMMAND_PREFIX}help`
+`{COMMAND_PREFIX}help [full]`
 `{COMMAND_PREFIX}kill`'''
 
     response += f'''
@@ -120,7 +120,7 @@ async def handle(client, message, args):
         raise Exception('You are not a member.')
 
 
-    if subcmd and subcmd == 'long':
+    if subcmd and subcmd == 'full':
         await subcmd_long(client, message, args, is_admin=is_admin)
         return
 
