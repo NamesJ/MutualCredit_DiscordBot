@@ -1,3 +1,12 @@
+import os
+
+try:
+    COMMAND_PREFIX = os.environ['COMMAND_PREFIX']
+except:
+    COMMAND_PREFIX = '!m '
+    os.environ['COMMAND_PREFIX'] = COMMAND_PREFIX
+
+
 from . import account, help, kill, offer, tag, transaction
 
 from .mutual_credit.errors import UserPermissionError
@@ -6,7 +15,6 @@ from .utils import find_subcommands, mention_to_id
 
 import discord
 from discord.utils import get
-import os
 import shlex
 import logging
 
@@ -14,6 +22,7 @@ log = logging.getLogger(__name__)
 
 intents = discord.Intents.default()
 intents.members = True
+
 
 
 
@@ -30,8 +39,8 @@ class MutualCreditClient (discord.Client):
 
         log.info(f'{message}')
 
-        cmd = args[0][1:]
-        args = args[1:]
+        cmd = args[1]
+        args = args[2:]
 
         try:
             # non-member commands
@@ -68,7 +77,7 @@ class MutualCreditClient (discord.Client):
         if message.author == self.user:
             return
 
-        if not message.content.startswith('!'):
+        if not message.content.startswith(COMMAND_PREFIX):
             return
 
         try:
@@ -85,4 +94,4 @@ class MutualCreditClient (discord.Client):
 
 
 
-client = MutualCreditClient(command_prefix='!', intents=intents)
+client = MutualCreditClient(command_prefix=COMMAND_PREFIX, intents=intents)
