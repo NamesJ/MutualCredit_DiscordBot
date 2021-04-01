@@ -1,43 +1,29 @@
 # MutualCredit_DiscordBot
 A Discord Bot that adds a mutual credit system to your server.
 
-*Note: This project is in very early alpha. It is not yet ready for actual use.*
+**THIS PROJECT SHOULD BE CONSIDERED ABANDONED. IT IS/WILL-BE DEPRECATED BY THE FOLLOWING PROJECTS:**
 
-## Todo
-* Diagrams
-  ** User workflow diagrams to make high-level understanding of how things work easier to understand.
-* Data integrity
-  ** There is currently little to no data integrity checks for what data is inserted into the database.
-* Cleaner bot interface
-  ** The current interface requires the user to perform a lot of actions by copying unique IDs for things. It would more user-friendly if this were abstracted away.
-  ** The results returned from commands are also not all that user friendly as they're usually just python dictionaries.
-* Private bot messaging
-  ** At the moment, users can only send commands to the bot from public channels. Some results are sent via direct message to the calling user, but sending commands is not yet possible. Being able to keep all of your mutual credit commands and results from the bot in a single private channel with just yourself and the bot would keep public channels from being overwhelmed and allow for a legible and tidy personal bot history.
-  ** Responses from bot are now sent via DM.
-  ** Commands are still only accepted from public channels.
-* Tests
-  ** There are currently no tests. This is... bad.
-* Error handling
-  ** Saying that errors aren't handled gracefully is laughably understated. Right now they're just printed to the console and the channel in the original context of the command.
-* Logging
-  ** There are currently no robust logging features. This would be really helpful in debugging and error-recovery.
-* Democratic control mechanisms
-  ** A voting mechanism for deciding if a certain users is allowed to have a credit account would be cool. Currently, the bot just restricts credit commands to users with the 'member' role. This can be managed by whatever leadership already exists for the server; so maybe it isn't necessary for now.
+Back-end: [mutual-credit-server](https://github.com/NamesJ/mutual-credit-server)
 
-## What *is* working
-* Managing accounts (create, delete)
-* Managing your accounts offers (create, delete, list)
-* Listing offers from other accounts
-* Creating transactions (buy requests) for another users offers
-* Cancelling buy requests you created that are still pending
-* Approving transactions (approving a buy request) sent to you
-* Denying transactions (denying a buy request) sent to you
-* Account balances are properly updated (so far -- no edge cases tested yet)
+Front-end: [mutual-credit-ui](https://github.com/NamesJ/mutual-credit-ui)
+
+Bot Interface: [mutual-credit-bot](https://github.com/NamesJ/mutual-credit-bot)
+
+## Features
+* Managing account (create, delete, show balance)
+* Managing your accounts offers (create, delete, show)
+* Showing account offers of your and other user's accounts
+* Creating transactions (buy requests) for offers
+* Cancelling your pending buy requests
+* Approving transactions (approving a buy request) sent to you from other users
+* Denying transactions (denying a buy request) sent to you from other users
+* Enforced maximum credit/debit limits for accounts
+* DM (Private Messaging) for sending commands and receiving responses
 
 ## Try me
 The latest version of this project is running on a Discord server for testing and discussion.
 
-Feel free to join and give the system a try:
+Feel free to join and give it a try:
 
 https://discord.gg/ECKkNrjWrf
 
@@ -45,7 +31,7 @@ https://discord.gg/ECKkNrjWrf
 *Python 3.7 or greater required*
 
 
-You will need at least two users (other than the bot) to use this system.
+You will need at least two users (other than the bot) to properly use this system, as transactions occur between two existing accounts.
 
 ## Deploy
 
@@ -58,39 +44,17 @@ For now, giving your bot `Administrator` permissions will due.
 Note: You may need to enable `SERVER MEMBERS INTENT` on the bot page.
 
 
-### Setup virtual environment for project
-
-Set up a virtual environment for development by running `python -m venv <venv>`, where `<venv>` is the path for a directory to store virtual environment files in.
-
-
-### Activate the virtual environment
+### Setup virtual environment and install dependencies
+**Pipenv is used for managing both of these and is recommended**
 ```
-# Linux
-source <venv>/bin/activate
+# In project root directory...
 
-# Windows
-## Command Prompt
-<venv>\Scripts\activate.bat
-## Powershell
-<venv>\Scripts\activate.ps1
+## Spawns a shell within the virtualenv
+pipenv shell
+
+## Installs all packages specified in Pipfile.lock
+pipenv sync
 ```
-
-*Note: you may have to update the execution policy for Powershell in order to run the activate script, as it is unsigned.*
-
-Once the virtual environment is activated `(<venv>)` will appear to the left of your command prompt line.
-
-
-### Install dependencies in virtual environment
-
-Now, with the virtual environment activated, install the project dependencies with pip:
-```
-# Unix/maxOS
-python -m pip install -r requirements.txt
-
-Windows
-py -m pip install -r requirements.txt
-```
-
 
 ### Configure client Discord API key
 
